@@ -2,17 +2,15 @@ using PWDFT
 using Test
 using Random
 
-const DIR_PWDFT = joinpath(dirname(pathof(PWDFT)),"..")
-
 function init_Ham_H_atom_SCAN()
 
     atoms = Atoms(xyz_string="""
-   1
+        1
 
-   H  0.0  0.0  0.0
-   """, LatVecs=gen_lattice_sc(16.0))
+        H  0.0  0.0  0.0
+        """, LatVecs=gen_lattice_sc(16.0))
 
-    pspfiles = [joinpath(DIR_PWDFT, "pseudopotentials", "scan_upf", "H.SCAN.UPF")]
+    pspfiles = [joinpath(@__DIR__, "../pseudopotentials", "scan_upf", "H.SCAN.UPF")]
     ecutwfc = 20.0
 
     return Hamiltonian(atoms, pspfiles, ecutwfc, xcfunc="SCAN", meshk=[10, 10, 10])
