@@ -1,4 +1,5 @@
 [deps]
 Coverage = "a2441757-f6aa-5fb2-8edb-039e3f45d037"
 PWDFT = "f0909338-8605-11e9-2ba7-5dc928b678ea"
+Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"

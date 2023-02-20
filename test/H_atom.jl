@@ -9,7 +9,7 @@ function init_Ham_H_atom()
     pspfiles = [joinpath(DIR_PWDFT, "pseudopotentials", "pade_gth", "H-q1.gth")]
     ecutwfc = 15.0
 
-    return Hamiltonian(atoms, pspfiles, 15.0)
+    return Hamiltonian(atoms, pspfiles, ecutwfc)
 end
 
 const Etot_H_atom = -0.4400340349 # ABINIT

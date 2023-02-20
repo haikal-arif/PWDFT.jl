@@ -18,5 +18,5 @@ function test_atoms()
 end
 
 @testset "init_atoms function" begin
-    @test test_atoms() == nothing
+    @test test_atoms() === nothing
 end

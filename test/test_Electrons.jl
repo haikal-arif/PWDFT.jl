@@ -48,6 +48,6 @@ end
 
 
 @testset "Electrons" begin
-    @test test_O2() == nothing
-    @test test_Ni_q18_fcc() == nothing
+    @test test_O2() === nothing
+    @test test_Ni_q18_fcc() === nothing
 end
