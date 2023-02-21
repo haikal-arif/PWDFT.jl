@@ -6,7 +6,7 @@ Occupation numbers are by default will only displayed for
 several states only, except when `all_states=true`.
 All occupation numbers will be displayed for all kpoints.
 """
-function show( io::IO, electrons::Electrons; header=true, all_states=false )
+function show(io::IO, electrons::Electrons; header=true, all_states=false)
 
     Nspin = electrons.Nspin
     Focc = electrons.Focc
@@ -14,7 +14,7 @@ function show( io::IO, electrons::Electrons; header=true, all_states=false )
     Nstates = electrons.Nstates
     Nstates_occ = electrons.Nstates_occ
     Nkspin = size(Focc)[2]
-    Nkpt = Nkspin/Nspin
+    Nkpt = Nkspin / Nspin
 
     if header
         @printf(io, "\n")
@@ -46,7 +46,7 @@ function show( io::IO, electrons::Electrons; header=true, all_states=false )
         for ist = 1:Nstates
             @printf(io, "state #%4d = ", ist)
             for iks = 1:Nkspin
-                @printf(io, "%8.5f ", Focc[ist,iks])
+                @printf(io, "%8.5f ", Focc[ist, iks])
                 if (iks % Nk_per_line) == 0
                     @printf(io, "\n")
                     @printf(io, "              ")
@@ -59,7 +59,7 @@ function show( io::IO, electrons::Electrons; header=true, all_states=false )
         for ist = 1:4
             @printf(io, "state #%4d = ", ist)
             for iks = 1:Nkspin
-                @printf(io, "%8.5f ", Focc[ist,iks])
+                @printf(io, "%8.5f ", Focc[ist, iks])
                 if (iks % Nk_per_line) == 0
                     @printf(io, "\n")
                     @printf(io, "              ")
@@ -72,7 +72,7 @@ function show( io::IO, electrons::Electrons; header=true, all_states=false )
         for ist = Nstates-3:Nstates
             @printf(io, "state #%4d = ", ist)
             for iks = 1:Nkspin
-                @printf(io, "%8.5f ", Focc[ist,iks])
+                @printf(io, "%8.5f ", Focc[ist, iks])
                 if (iks % Nk_per_line) == 0
                     @printf(io, "\n")
                     @printf(io, "              ")
@@ -82,12 +82,12 @@ function show( io::IO, electrons::Electrons; header=true, all_states=false )
         end
     end
 end
-show( electrons::Electrons; header=true, all_states=false ) = show( stdout, electrons, header=header, all_states=all_states )
+show(electrons::Electrons; header=true, all_states=false) = show(stdout, electrons, header=header, all_states=all_states)
 
 
-function print_ebands( io::IO, electrons::Electrons, kpoints::KPoints; unit="hartree" )
+function print_ebands(io::IO, electrons::Electrons, kpoints::KPoints; unit="hartree")
     if unit == "eV"
-        ebands = electrons.ebands*2*Ry2eV
+        ebands = electrons.ebands * 2 * Ry2eV
     else
         ebands = electrons.ebands
     end
@@ -97,34 +97,34 @@ function print_ebands( io::IO, electrons::Electrons, kpoints::KPoints; unit="har
     Nkspin = size(Focc)[2]
     Nkpt = kpoints.Nkpt
     wk = kpoints.wk
-        
+
     Nstates = electrons.Nstates
 
     for ik = 1:Nkpt
         @printf(io, "ik = %5d, k = (%18.10f,%18.10f,%18.10f)\n\n",
-                ik, kpoints.k[1,ik], kpoints.k[2,ik], kpoints.k[3,ik])
+            ik, kpoints.k[1, ik], kpoints.k[2, ik], kpoints.k[3, ik])
         if electrons.Nspin == 2
             for ist = 1:Nstates
                 @printf(io, "%8d %13.10f %18.10f -- %13.10f %18.10f\n", ist,
-                        Focc[ist,ik], ebands[ist,ik], Focc[ist,ik+Nkpt], ebands[ist,ik+Nkpt])
+                    Focc[ist, ik], ebands[ist, ik], Focc[ist, ik+Nkpt], ebands[ist, ik+Nkpt])
             end
         else
             for ist = 1:Nstates
                 @printf(io, "%8d %13.10f %18.10f\n", ist,
-                        Focc[ist,ik], ebands[ist,ik])
+                    Focc[ist, ik], ebands[ist, ik])
             end
         end
         @printf(io, "\n")
     end
 
     for ik = 1:Nkpt
-        Focc[:,ik] = wk[ik]*Focc[:,ik]
+        Focc[:, ik] = wk[ik] * Focc[:, ik]
     end
     if Nspin == 2
         for ik = 1:Nkpt
-            Focc[:,ik+Nkpt] = wk[ik]*Focc[:,ik+Nkpt]
+            Focc[:, ik+Nkpt] = wk[ik] * Focc[:, ik+Nkpt]
         end
     end
     @printf(io, "sum(weighted Focc) = %18.10f\n", sum(Focc))
 end
-print_ebands( electrons::Electrons, kpoints::KPoints; unit="hartree" ) = print_ebands( stdout, electrons, kpoints, unit=unit )
+print_ebands(electrons::Electrons, kpoints::KPoints; unit="hartree") = print_ebands(stdout, electrons, kpoints, unit=unit)

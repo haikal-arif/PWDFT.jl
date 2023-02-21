@@ -9,7 +9,7 @@ function calc_rhoe!(
     Nspin = Ham.electrons.Nspin
     Nelectrons_true = Ham.electrons.Nelectrons
 
-    CellVolume  = pw.CellVolume
+    CellVolume = pw.CellVolume
     Ns = pw.Ns
     Nkpt = pw.gvecw.kpoints.Nkpt
     Ngw = pw.gvecw.Ngw
@@ -22,19 +22,19 @@ function calc_rhoe!(
 
     # dont forget to zero out the Rhoe first
     fill!(Rhoe, 0.0)
-    NptsPerSqrtVol = Npoints/sqrt(CellVolume)
+    NptsPerSqrtVol = Npoints / sqrt(CellVolume)
     for ispin in 1:Nspin, ik in 1:Nkpt
         #
-        ikspin = ik + (ispin - 1)*Nkpt
+        ikspin = ik + (ispin - 1) * Nkpt
         psi = psiks[ikspin]
         #
         for ist in 1:Nstates
             #
-            fill!(ctmp, 0.0 + im*0.0)
+            fill!(ctmp, 0.0 + im * 0.0)
             #
             for igw in 1:Ngw[ik]
                 ip = idx_gw2r[ik][igw]
-                ctmp[ip] = psi[igw,ist]
+                ctmp[ip] = psi[igw, ist]
             end
             # to real space
             G_to_R!(pw, ctmp)
@@ -42,34 +42,34 @@ function calc_rhoe!(
             for ip in 1:Npoints
                 ctmp[ip] *= NptsPerSqrtVol
             end
-            w = wk[ik]*Focc[ist,ikspin]
+            w = wk[ik] * Focc[ist, ikspin]
             for ip in 1:Npoints
                 # accumulate
-                Rhoe[ip,ispin] += w*real( conj(ctmp[ip])*ctmp[ip] )
+                Rhoe[ip, ispin] += w * real(conj(ctmp[ip]) * ctmp[ip])
             end
         end
     end # ik, ispin
 
     # renormalize
     if renormalize
-        integ_rho = sum(Rhoe)*CellVolume/Npoints
+        integ_rho = sum(Rhoe) * CellVolume / Npoints
         for i in 1:length(Rhoe)
-            Rhoe[i] *= Nelectrons_true/integ_rho
+            Rhoe[i] *= Nelectrons_true / integ_rho
         end
     end
 
     # Symmetrize Rhoe if needed
     if Ham.sym_info.Nsyms > 1
-        symmetrize_rhoe!( Ham.pw, Ham.sym_info, Ham.rhoe_symmetrizer, Rhoe )
+        symmetrize_rhoe!(Ham.pw, Ham.sym_info, Ham.rhoe_symmetrizer, Rhoe)
     end
 
     return
 end
 
-function calc_rhoe( Ham::Hamiltonian, psiks::BlochWavefunc )
+function calc_rhoe(Ham::Hamiltonian, psiks::BlochWavefunc)
     Npoints = prod(Ham.pw.Ns)
     Nspin = Ham.electrons.Nspin
     Rhoe = zeros(Float64, Npoints, Nspin)
-    calc_rhoe!( Ham, psiks, Rhoe )
+    calc_rhoe!(Ham, psiks, Rhoe)
     return Rhoe
 end

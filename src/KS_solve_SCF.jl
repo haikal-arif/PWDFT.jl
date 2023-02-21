@@ -1,6 +1,6 @@
 # For compatibility
-function KS_solve_SCF!( Ham::Hamiltonian; kwargs... )
-    KS_solve_SCF!( Ham, rand_BlochWavefunc(Ham); kwargs... )
+function KS_solve_SCF!(Ham::Hamiltonian; kwargs...)
+    KS_solve_SCF!(Ham, rand_BlochWavefunc(Ham); kwargs...)
     return
 end
 
@@ -52,7 +52,7 @@ function KS_solve_SCF!(
     Ns = pw.Ns
     Npoints = prod(Ns)
     CellVolume = pw.CellVolume
-    dVol = CellVolume/Npoints
+    dVol = CellVolume / Npoints
     #
     electrons = Ham.electrons
     Nelectrons = electrons.Nelectrons
@@ -61,7 +61,7 @@ function KS_solve_SCF!(
     Nstates_occ = electrons.Nstates_occ
     Nspin = electrons.Nspin
     #
-    Nkspin = Nkpt*Nspin
+    Nkspin = Nkpt * Nspin
     Nstates_occ = electrons.Nstates_occ
 
     if verbose
@@ -85,7 +85,7 @@ function KS_solve_SCF!(
     if Nstates_occ < Nstates
         E_GAP_INFO = true
         if Nspin == 2
-            idx_HOMO = max(round(Int64,Nstates_occ/2),1)
+            idx_HOMO = max(round(Int64, Nstates_occ / 2), 1)
             idx_LUMO = idx_HOMO + 1
         else
             idx_HOMO = Nstates_occ
@@ -98,29 +98,29 @@ function KS_solve_SCF!(
     if startingrhoe == :gaussian
         # From superposition of atom-centered densities
         if Nspin == 1
-            Rhoe[:,1] = guess_rhoe( Ham )
+            Rhoe[:, 1] = guess_rhoe(Ham)
         else
-            Rhoe = guess_rhoe_atomic( Ham, starting_magnetization=starting_magnetization )
+            Rhoe = guess_rhoe_atomic(Ham, starting_magnetization=starting_magnetization)
         end
     elseif startingrhoe == :none
         # Use previously calculated density stored in Ham.rhoe
         Rhoe = copy(Ham.rhoe)
     else
         # Density will be calculated from input wave function
-        calc_rhoe!( Ham, psiks, Rhoe )
+        calc_rhoe!(Ham, psiks, Rhoe)
     end
 
     if Nspin == 2
         magn_den = zeros(Npoints)
         for ip in 1:Npoints
-            magn_den[ip] = Rhoe[ip,1] - Rhoe[ip,2]
+            magn_den[ip] = Rhoe[ip, 1] - Rhoe[ip, 2]
         end
     end
 
     if Nspin == 2 && verbose
-        @printf("Initial integ Rhoe up  = %18.10f\n", sum(Rhoe[:,1])*dVol)
-        @printf("Initial integ Rhoe dn  = %18.10f\n", sum(Rhoe[:,2])*dVol)
-        @printf("Initial integ magn_den = %18.10f\n", sum(magn_den)*dVol)
+        @printf("Initial integ Rhoe up  = %18.10f\n", sum(Rhoe[:, 1]) * dVol)
+        @printf("Initial integ Rhoe dn  = %18.10f\n", sum(Rhoe[:, 2]) * dVol)
+        @printf("Initial integ magn_den = %18.10f\n", sum(magn_den) * dVol)
         println("")
     end
 
@@ -128,31 +128,31 @@ function KS_solve_SCF!(
 
     Etot_old = 0.0
 
-    Rhoe_new = zeros(Float64,Npoints,Nspin)
+    Rhoe_new = zeros(Float64, Npoints, Nspin)
 
     diffRhoe = zeros(Nspin)
 
-    evals = zeros(Float64,Nstates,Nkspin)
+    evals = zeros(Float64, Nstates, Nkspin)
 
     ethr = 0.1
-    
+
     if mix_method in ("anderson", "broyden")
-        df = zeros(Float64,Npoints*Nspin, mixdim)
-        dv = zeros(Float64,Npoints*Nspin, mixdim)
-    
+        df = zeros(Float64, Npoints * Nspin, mixdim)
+        dv = zeros(Float64, Npoints * Nspin, mixdim)
+
     elseif mix_method == "linear_adaptive"
-        betav = betamix*ones(Float64, Npoints*Nspin)
-        df = zeros(Float64, Npoints*Nspin)
-    
+        betav = betamix * ones(Float64, Npoints * Nspin)
+        df = zeros(Float64, Npoints * Nspin)
+
     elseif mix_method in ("rpulay", "ppulay", "pulay")
-        XX = zeros(Float64,Npoints*Nspin, mixdim)
-        FF = zeros(Float64,Npoints*Nspin, mixdim)
-        x_old = zeros(Float64,Npoints,Nspin)
-        f_old = zeros(Float64,Npoints,Nspin)
+        XX = zeros(Float64, Npoints * Nspin, mixdim)
+        FF = zeros(Float64, Npoints * Nspin, mixdim)
+        x_old = zeros(Float64, Npoints, Nspin)
+        f_old = zeros(Float64, Npoints, Nspin)
     end
 
     # calculate E_NN
-    Ham.energies.NN = calc_E_NN( Ham.atoms )
+    Ham.energies.NN = calc_E_NN(Ham.atoms)
 
     Nconverges = 0
 
@@ -178,94 +178,94 @@ function KS_solve_SCF!(
         elseif iter == 2
             ethr = 0.01
         else
-            ethr = ethr/5.0
-            ethr = max( ethr, ethr_evals_last )
+            ethr = ethr / 5.0
+            ethr = max(ethr, ethr_evals_last)
         end
 
         if update_psi == "LOBPCG"
 
             evals =
-            diag_LOBPCG!( Ham, psiks, verbose=false, verbose_last=false, tol=ethr,
-                          Nstates_conv=Nstates_occ )
+                diag_LOBPCG!(Ham, psiks, verbose=false, verbose_last=false, tol=ethr,
+                    Nstates_conv=Nstates_occ)
 
         elseif update_psi == "davidson"
 
             evals =
-            diag_davidson!( Ham, psiks, verbose=false, verbose_last=false, tol=ethr,
-                            Nstates_conv=Nstates_occ )                
+                diag_davidson!(Ham, psiks, verbose=false, verbose_last=false, tol=ethr,
+                    Nstates_conv=Nstates_occ)
 
         elseif update_psi == "PCG"
 
             evals =
-            diag_Emin_PCG!( Ham, psiks, verbose=false, verbose_last=false, tol=ethr,
-                            Nstates_conv=Nstates_occ )
+                diag_Emin_PCG!(Ham, psiks, verbose=false, verbose_last=false, tol=ethr,
+                    Nstates_conv=Nstates_occ)
 
         elseif update_psi == "CheFSI"
 
             evals =
-            diag_CheFSI!( Ham, psiks, cheby_degree )
+                diag_CheFSI!(Ham, psiks, cheby_degree)
 
         else
-            error( @sprintf("Unknown method for update_psi = %s\n", update_psi) )
+            error(@sprintf("Unknown method for update_psi = %s\n", update_psi))
         end
 
         if E_GAP_INFO && verbose && print_e_gap
-            @printf("E gap = %18.10f\n", minimum(evals[idx_LUMO,:] - evals[idx_HOMO,:]))
+            @printf("E gap = %18.10f\n", minimum(evals[idx_LUMO, :] - evals[idx_HOMO, :]))
         end
 
         if use_smearing
-            Focc, E_fermi = calc_Focc( Nelectrons, wk, kT, evals, Nspin )
-            Entropy = calc_entropy( wk, kT, evals, E_fermi, Nspin )
+            Focc, E_fermi = calc_Focc(Nelectrons, wk, kT, evals, Nspin)
+            Entropy = calc_entropy(wk, kT, evals, E_fermi, Nspin)
             Ham.electrons.Focc = copy(Focc)
         end
 
-        calc_rhoe!( Ham, psiks, Rhoe_new )
+        calc_rhoe!(Ham, psiks, Rhoe_new)
 
         for ispin = 1:Nspin
-            diffRhoe[ispin] = sum(abs.(Rhoe_new[:,ispin] - Rhoe[:,ispin]))/Npoints
+            diffRhoe[ispin] = sum(abs.(Rhoe_new[:, ispin] - Rhoe[:, ispin])) / Npoints
         end
 
         # check norm of
         if check_rhoe
-            integRhoe = sum(Rhoe_new)*dVol
+            integRhoe = sum(Rhoe_new) * dVol
             @printf("Before: integRhoe_new = %18.10f\n", integRhoe)
-            Rhoe_new = Nelectrons/integRhoe * Rhoe_new
-            integRhoe = sum(Rhoe_new)*dVol
+            Rhoe_new = Nelectrons / integRhoe * Rhoe_new
+            integRhoe = sum(Rhoe_new) * dVol
             @printf("After renormalize Rhoe_new: = %18.10f\n", integRhoe)
         end
 
         if mix_method == "simple"
 
-            Rhoe = betamix*Rhoe_new + (1-betamix)*Rhoe
+            Rhoe = betamix * Rhoe_new + (1 - betamix) * Rhoe
 
         elseif mix_method == "linear_adaptive"
 
-            mix_adaptive!( Rhoe, Rhoe_new, betamix, betav, df )
+            mix_adaptive!(Rhoe, Rhoe_new, betamix, betav, df)
 
         elseif mix_method == "broyden"
 
-            mix_broyden!( Rhoe, Rhoe_new, betamix, iter, mixdim, df, dv )
+            mix_broyden!(Rhoe, Rhoe_new, betamix, iter, mixdim, df, dv)
 
         elseif mix_method == "pulay"
-        
-            mix_pulay!( Rhoe, Rhoe_new, betamix, XX, FF, iter, mixdim, x_old, f_old )
+
+            mix_pulay!(Rhoe, Rhoe_new, betamix, XX, FF, iter, mixdim, x_old, f_old)
 
         elseif mix_method == "rpulay"
-            
-            mix_rpulay!( Rhoe, Rhoe_new, betamix, XX, FF, iter, mixdim, x_old, f_old )
+
+            mix_rpulay!(Rhoe, Rhoe_new, betamix, XX, FF, iter, mixdim, x_old, f_old)
             # result is in Rhoe
 
         elseif mix_method == "ppulay"
-            
+
             #XXX We fix the period to be 3 here
 
-            mix_ppulay!( Rhoe, Rhoe_new, betamix, XX, FF, iter, mixdim, 3, x_old, f_old )
+            mix_ppulay!(Rhoe, Rhoe_new, betamix, XX, FF, iter, mixdim, 3, x_old, f_old)
 
-        
+
         elseif mix_method == "anderson"
 
-            mix_anderson!( Rhoe, Rhoe_new, betamix, df, dv, iter, mixdim )
-        
+            mix_anderson!(Rhoe, Rhoe_new, betamix, df, dv, iter, mixdim)
+
         else
             error(@sprintf("Unknown mix_method = %s\n", mix_method))
 
@@ -278,45 +278,45 @@ function KS_solve_SCF!(
         end
 
         if Nspin == 2
-            magn_den = Rhoe[:,1] - Rhoe[:,2]
+            magn_den = Rhoe[:, 1] - Rhoe[:, 2]
         end
 
         # renormalize
         if check_rhoe
-            integRhoe = sum(Rhoe)*dVol
+            integRhoe = sum(Rhoe) * dVol
             #@printf("After mixing: integRhoe = %18.10f\n", integRhoe)
-            Rhoe = Nelectrons/integRhoe * Rhoe
-            integRhoe = sum(Rhoe)*dVol
+            Rhoe = Nelectrons / integRhoe * Rhoe
+            integRhoe = sum(Rhoe) * dVol
             #@printf("After renormalize Rhoe: = %18.10f\n", integRhoe)
         end
 
         update!(Ham, psiks, Rhoe)
 
         # Calculate energies
-        Ham.energies = calc_energies( Ham, psiks )
+        Ham.energies = calc_energies(Ham, psiks)
         if use_smearing
             Ham.energies.mTS = Entropy
         end
         Etot = sum(Ham.energies)
-        diffE = abs( Etot - Etot_old )
+        diffE = abs(Etot - Etot_old)
 
         if verbose
             if Nspin == 1
                 @printf("SCF: %5d %18.10f %12.5e %12.5e\n",
-                         iter, Etot, diffE, diffRhoe[1] )
+                    iter, Etot, diffE, diffRhoe[1])
                 if print_integ_rhoe
-                    @printf("integ Rhoe = %18.10f\n", sum(Rhoe)*dVol)
+                    @printf("integ Rhoe = %18.10f\n", sum(Rhoe) * dVol)
                 end
             else
                 @printf("SCF: %5d %18.10f %12.5e [%12.5e,%12.5e]\n",
-                         iter, Etot, diffE, diffRhoe[1], diffRhoe[2] )
+                    iter, Etot, diffE, diffRhoe[1], diffRhoe[2])
                 if print_integ_rhoe
-                    magn_den = Rhoe[:,1] - Rhoe[:,2]
-                    @printf("integ Rhoe spin up = %18.10f\n", sum(Rhoe[:,1])*dVol) 
-                    @printf("integ Rhoe spin dn = %18.10f\n", sum(Rhoe[:,2])*dVol) 
-                    @printf("integ magn_den = %18.10f\n", sum(magn_den)*dVol) 
+                    magn_den = Rhoe[:, 1] - Rhoe[:, 2]
+                    @printf("integ Rhoe spin up = %18.10f\n", sum(Rhoe[:, 1]) * dVol)
+                    @printf("integ Rhoe spin dn = %18.10f\n", sum(Rhoe[:, 2]) * dVol)
+                    @printf("integ magn_den = %18.10f\n", sum(magn_den) * dVol)
                 end
-            end     
+            end
         end
 
         if diffE < etot_conv_thr
@@ -340,14 +340,14 @@ function KS_solve_SCF!(
     Ham.electrons.ebands = evals
 
     if use_smearing && verbose
-        @printf("\nFermi energy = %18.10f Ha = %18.10f eV\n", E_fermi, E_fermi*2*Ry2eV)
+        @printf("\nFermi energy = %18.10f Ha = %18.10f eV\n", E_fermi, E_fermi * 2 * Ry2eV)
     end
 
     if Nspin == 2 && verbose
         @printf("\n")
-        @printf("Final integ Rhoe up  = %18.10f\n", sum(Rhoe[:,1])*dVol)
-        @printf("Final integ Rhoe dn  = %18.10f\n", sum(Rhoe[:,2])*dVol)
-        @printf("Final integ magn_den = %18.10f\n", sum(magn_den)*dVol)
+        @printf("Final integ Rhoe up  = %18.10f\n", sum(Rhoe[:, 1]) * dVol)
+        @printf("Final integ Rhoe dn  = %18.10f\n", sum(Rhoe[:, 2]) * dVol)
+        @printf("Final integ magn_den = %18.10f\n", sum(magn_den) * dVol)
     end
 
     if verbose && print_final_ebands

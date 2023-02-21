@@ -1,4 +1,4 @@
-function calc_rhoe_uspp( Ham::Hamiltonian, psiks::BlochWavefunc )
+function calc_rhoe_uspp(Ham::Hamiltonian, psiks::BlochWavefunc)
     Npoints = prod(Ham.pw.Ns)
     Nspin = Ham.electrons.Nspin
     Rhoe = zeros(Float64, Npoints, Nspin)
@@ -16,7 +16,7 @@ function calc_rhoe_uspp!(
     Nspin = Ham.electrons.Nspin
     Nelectrons_true = Ham.electrons.Nelectrons
 
-    CellVolume  = pw.CellVolume
+    CellVolume = pw.CellVolume
     Ns = pw.Ns
     Nkpt = pw.gvecw.kpoints.Nkpt
     Ngw = pw.gvecw.Ngw
@@ -36,29 +36,29 @@ function calc_rhoe_uspp!(
     # dont forget to zero out the Rhoe first
     fill!(Rhoe, 0.0)
 
-    NptsPerSqrtVol = NpointsSmooth/sqrt(CellVolume)
+    NptsPerSqrtVol = NpointsSmooth / sqrt(CellVolume)
 
-    dVol = CellVolume/Npoints # dense
+    dVol = CellVolume / Npoints # dense
 
     nhm = Ham.pspotNL.nhm
     Natoms = Ham.atoms.Natoms
-    Nbecsum = Int64( nhm * (nhm + 1)/2 )
+    Nbecsum = Int64(nhm * (nhm + 1) / 2)
 
     becsum = zeros(Float64, Nbecsum, Natoms, Nspin)
 
     #
     for ispin in 1:Nspin, ik in 1:Nkpt
         #
-        ikspin = ik + (ispin - 1)*Nkpt
+        ikspin = ik + (ispin - 1) * Nkpt
         psi = psiks[ikspin]
         #
         for ist in 1:Nstates
             #
-            fill!(ctmp, 0.0 + im*0.0)
+            fill!(ctmp, 0.0 + im * 0.0)
             #
             for igw in 1:Ngw[ik]
                 ip = idx_gw2r[ik][igw]
-                ctmp[ip] = psi[igw,ist]
+                ctmp[ip] = psi[igw, ist]
             end
             # to real space (use smooth grid if using dual grid)
             G_to_R!(pw, ctmp, smooth=pw.using_dual_grid)
@@ -67,11 +67,11 @@ function calc_rhoe_uspp!(
                 ctmp[ip] *= NptsPerSqrtVol
             end
             #
-            w = wk[ik]*Focc[ist,ikspin]
+            w = wk[ik] * Focc[ist, ikspin]
             #
             for ip in 1:NpointsSmooth
                 # accumulate
-                RhoeSmooth[ip,ispin] += w*real( conj(ctmp[ip])*ctmp[ip] )
+                RhoeSmooth[ip, ispin] += w * real(conj(ctmp[ip]) * ctmp[ip])
             end
         end
     end # ik, ispin
@@ -110,14 +110,14 @@ function calc_rhoe_uspp!(
 
     # Symmetrize Rhoe if needed
     if Ham.sym_info.Nsyms > 1
-        symmetrize_rhoe!( Ham.pw, Ham.sym_info, Ham.rhoe_symmetrizer, Rhoe )
+        symmetrize_rhoe!(Ham.pw, Ham.sym_info, Ham.rhoe_symmetrizer, Rhoe)
     end
 
     return
 end
 
 
-function _add_usdens!( Ham, becsum, Rhoe )
+function _add_usdens!(Ham, becsum, Rhoe)
 
     G = Ham.pw.gvec.G
     G2 = Ham.pw.gvec.G2
@@ -132,8 +132,8 @@ function _add_usdens!( Ham, becsum, Rhoe )
     atm2species = Ham.atoms.atm2species
     atpos = Ham.atoms.positions
 
-    lmaxq = 2*lmaxkb + 1 # using 1-indexing
-    ylmk0 = zeros(Float64, Ng, lmaxq*lmaxq)
+    lmaxq = 2 * lmaxkb + 1 # using 1-indexing
+    ylmk0 = zeros(Float64, Ng, lmaxq * lmaxq)
     _lmax = lmaxq - 1 # or 2*lmaxkb
     # Ylm_real_qe accept l value starting from 0
     Ylm_real_qe!(_lmax, G, ylmk0)
@@ -148,7 +148,7 @@ function _add_usdens!( Ham, becsum, Rhoe )
         end
 
         # nij = max number of (ih,jh) pairs per atom type nt
-        nij = Int64( nh[isp]*(nh[isp] + 1)/2 )
+        nij = Int64(nh[isp] * (nh[isp] + 1) / 2)
 
         # count max number of atoms of type isp
         nab = sum(atm2species .== isp)
@@ -163,25 +163,25 @@ function _add_usdens!( Ham, becsum, Rhoe )
                 continue
             end
             nb = nb + 1
-            tbecsum[:,nb,:] = becsum[1:nij,ia,1:Nspin]
+            tbecsum[:, nb, :] = becsum[1:nij, ia, 1:Nspin]
             for ig in 1:Ng
-                GX = atpos[1,ia]*G[1,ig] + atpos[2,ia]*G[2,ig] + atpos[3,ia]*G[3,ig]
-                Skk[ig,nb] = cos(GX) - im*sin(GX)
+                GX = atpos[1, ia] * G[1, ig] + atpos[2, ia] * G[2, ig] + atpos[3, ia] * G[3, ig]
+                Skk[ig, nb] = cos(GX) - im * sin(GX)
             end
         end
 
 
         for ispin in 1:Nspin
             # sum over atoms
-            aux2 = Skk * tbecsum[:,:,ispin]'
+            aux2 = Skk * tbecsum[:, :, ispin]'
             # sum over lm indices of Q_{lm}
             ijh = 0
             for ih in 1:nh[isp], jh in ih:nh[isp]
                 ijh = ijh + 1
                 # qgm is complex here
-                qvan2!( Ham.pspotNL, ih, jh, isp, G2, ylmk0, Qgm )
+                qvan2!(Ham.pspotNL, ih, jh, isp, G2, ylmk0, Qgm)
                 for ig in 1:Ng
-                    aux[ig,ispin] += aux2[ig,ijh]*Qgm[ig]
+                    aux[ig, ispin] += aux2[ig, ijh] * Qgm[ig]
                 end
             end
         end
@@ -189,17 +189,17 @@ function _add_usdens!( Ham, becsum, Rhoe )
 
     Npoints = prod(Ham.pw.Ns)
     CellVolume = Ham.pw.CellVolume
-    dVol = CellVolume/Npoints
+    dVol = CellVolume / Npoints
 
     ctmp = zeros(ComplexF64, Npoints)
     for ig in 1:Ng
         ip = idx_g2r[ig]
-        ctmp[ip] = aux[ig,1]
+        ctmp[ip] = aux[ig, 1]
     end
     # Use the dense grid
     G_to_R!(Ham.pw, ctmp)
     ctmp[:] *= Npoints # rescale
-    Rhoe[:,1] += real(ctmp)
+    Rhoe[:, 1] += real(ctmp)
 
     return
 end
@@ -216,7 +216,7 @@ end
 # \[ \sum_i \langle\psi_i|\beta_l\rangle w_i \langle\beta_m|\psi_i\rangle \]
 #
 # for point "ik" and, for LSDA, spin "current_spin".  
-function _add_becsum!( ik, ispin, Ham, psiks, becsum )
+function _add_becsum!(ik, ispin, Ham, psiks, becsum)
 
     Natoms = Ham.atoms.Natoms
     Nspecies = Ham.atoms.Nspecies
@@ -224,14 +224,14 @@ function _add_becsum!( ik, ispin, Ham, psiks, becsum )
 
     Nspin = Ham.electrons.Nspin
     Focc = Ham.electrons.Focc
-    
+
     nhm = Ham.pspotNL.nhm
     nh = Ham.pspotNL.nh
     indv_ijkb0 = Ham.pspotNL.indv_ijkb0
 
     Nkpt = Ham.pw.gvecw.kpoints.Nkpt
 
-    ikspin = ik + (ispin-1)*Nkpt
+    ikspin = ik + (ispin - 1) * Nkpt
     psi = psiks[ikspin]
 
     wk = Ham.pw.gvecw.kpoints.wk
@@ -246,7 +246,7 @@ function _add_becsum!( ik, ispin, Ham, psiks, becsum )
         if !Ham.pspots[isp].is_ultrasoft
             continue
         end
-        
+
         # These are used for GEMM.
         # They can be removed
         auxk1 = zeros(ComplexF64, Nstates, nh[isp])
@@ -255,7 +255,7 @@ function _add_becsum!( ik, ispin, Ham, psiks, becsum )
         # In becp=<vkb_i|psi_j> terms corresponding to atom ia of type isp
         # run from index i=indv_ijkb0[ia]+1 to i=indv_ijkb0[ia] + nh[isp]
         for ia in 1:Natoms
-            
+
             if atm2species[ia] != isp
                 continue
             end
@@ -265,8 +265,8 @@ function _add_becsum!( ik, ispin, Ham, psiks, becsum )
             for ih in 1:nh[isp]
                 ikb = indv_ijkb0[ia] + ih
                 for ist in 1:Nstates
-                    auxk1[ist,ih] = betaNL_psi[ikb,ist]
-                    auxk2[ist,ih] = wk[ik]*Focc[ist,ikspin]*betaNL_psi[ikb,ist]
+                    auxk1[ist, ih] = betaNL_psi[ikb, ist]
+                    auxk2[ist, ih] = wk[ik] * Focc[ist, ikspin] * betaNL_psi[ikb, ist]
                 end
             end
             #
@@ -278,7 +278,7 @@ function _add_becsum!( ik, ispin, Ham, psiks, becsum )
             aux_gk = real(auxk1' * auxk2)
 
             # TODO: calculated aux_gk directly without auxk1 and auxk2
-            
+
             # copy output from GEMM into desired format
             #
             ijh = 0
@@ -287,12 +287,12 @@ function _add_becsum!( ik, ispin, Ham, psiks, becsum )
                 # nondiagonal terms summed and collapsed into a
                 # single index (matrix is symmetric wrt (ih,jh))
                 if jh == ih
-                    becsum[ijh,ia,ispin] += aux_gk[ih,jh]
+                    becsum[ijh, ia, ispin] += aux_gk[ih, jh]
                 else
-                    becsum[ijh,ia,ispin] += aux_gk[ih,jh]*2.0
+                    becsum[ijh, ia, ispin] += aux_gk[ih, jh] * 2.0
                 end
             end
         end
     end
-    return 
+    return
 end

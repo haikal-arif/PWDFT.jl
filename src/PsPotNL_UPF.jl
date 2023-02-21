@@ -37,8 +37,8 @@ function PsPotNL_UPF(
     atm2species = atoms.atm2species
 
     # Those are parameters (HARDCODED)
-    lmaxx  = 3         # max non local angular momentum (l=0 to lmaxx)
-    lqmax = 2*lmaxx + 1  # max number of angular momenta of Q
+    lmaxx = 3         # max non local angular momentum (l=0 to lmaxx)
+    lqmax = 2 * lmaxx + 1  # max number of angular momenta of Q
 
     # calculate the number of beta functions for each atomic type
     nh = zeros(Int64, Nspecies)
@@ -53,8 +53,8 @@ function PsPotNL_UPF(
 
     NbetaNL = 0
     for ia in 1:Natoms
-       isp = atm2species[ia]
-       NbetaNL = NbetaNL + nh[isp]
+        isp = atm2species[ia]
+        NbetaNL = NbetaNL + nh[isp]
     end
 
     ap, lpx, lpl = _calc_clebsch_gordan(lmaxkb + 1)
@@ -78,21 +78,21 @@ function PsPotNL_UPF(
         for nb in 1:psp.Nproj
             l = psp.proj_l[nb]
             for m in 1:(2*l+1)
-                nhtol[ih,isp] = l
-                nhtolm[ih,isp] = l*l + m
-                indv[ih,isp] = nb
+                nhtol[ih, isp] = l
+                nhtolm[ih, isp] = l * l + m
+                indv[ih, isp] = nb
                 ih = ih + 1
             end
         end
         #
         # ijtoh map augmentation channel indexes ih and jh to composite
         # "triangular" index ijh
-        @views ijtoh[:,:,isp] .= -1
+        @views ijtoh[:, :, isp] .= -1
         ijv = 0
         for ih in 1:nh[isp], jh in ih:nh[isp]
-             ijv = ijv + 1
-             ijtoh[ih,jh,isp] = ijv
-             ijtoh[jh,ih,isp] = ijv
+            ijv = ijv + 1
+            ijtoh[ih, jh, isp] = ijv
+            ijtoh[jh, ih, isp] = ijv
         end
         #
         # ijkb0 points to the last beta "in the solid" for atom ia-1
@@ -107,18 +107,18 @@ function PsPotNL_UPF(
         end
 
         for ih in 1:nh[isp], jh in 1:nh[isp]
-            cond_l  = nhtol[ih,isp] == nhtol[jh,isp]
-            cond_lm = nhtolm[ih,isp] == nhtolm[jh,isp]
+            cond_l = nhtol[ih, isp] == nhtol[jh, isp]
+            cond_lm = nhtolm[ih, isp] == nhtolm[jh, isp]
             if cond_l && cond_lm
-                ihs = indv[ih,isp]
-                jhs = indv[jh,isp]
-                Dvan[ih,jh,isp] = psp.Dion[ihs,jhs]
+                ihs = indv[ih, isp]
+                jhs = indv[jh, isp]
+                Dvan[ih, jh, isp] = psp.Dion[ihs, jhs]
             end
         end
     end
     # TODO: Extract lm -> (l,m)
 
-    are_ultrasoft = zeros(Bool,Nspecies)
+    are_ultrasoft = zeros(Bool, Nspecies)
     for isp in 1:Nspecies
         are_ultrasoft[isp] = pspots[isp].is_ultrasoft
     end
@@ -136,7 +136,7 @@ function PsPotNL_UPF(
     end
 
     Nkpt = pw.gvecw.kpoints.Nkpt
-    betaNL = Vector{Matrix{ComplexF64}}(undef,Nkpt)
+    betaNL = Vector{Matrix{ComplexF64}}(undef, Nkpt)
     for ik in 1:Nkpt
         betaNL[ik] = zeros(ComplexF64, pw.gvecw.Ngw[ik], NbetaNL)
         _init_Vnl_KB!(
@@ -153,13 +153,13 @@ function PsPotNL_UPF(
     Deeq = zeros(Float64, nhm, nhm, Natoms, Nspin)
     # Set to Dvan if no ultrasoft
     #if all(.!are_ultrasoft)
-        for ia in 1:Natoms
-            isp = atm2species[ia]
-            nht = nh[isp]
-            for ispin in 1:Nspin
-                @views Deeq[1:nht,1:nht,ia,ispin] = Dvan[1:nht,1:nht,isp]
-            end
+    for ia in 1:Natoms
+        isp = atm2species[ia]
+        nht = nh[isp]
+        for ispin in 1:Nspin
+            @views Deeq[1:nht, 1:nht, ia, ispin] = Dvan[1:nht, 1:nht, isp]
         end
+    end
     #end
 
     return PsPotNL_UPF(
@@ -204,7 +204,7 @@ function _init_Vnl_KB!(
 )
 
     Ngw = pw.gvecw.Ngw
-    @assert size(Vnl_KB,1) == Ngw[ik]
+    @assert size(Vnl_KB, 1) == Ngw[ik]
 
     idx_gw2g = pw.gvecw.idx_gw2g
     k = pw.gvecw.kpoints.k
@@ -222,14 +222,14 @@ function _init_Vnl_KB!(
     # ig: index for G
     for igk in 1:Ngw[ik]
         ig = idx_gw2g[ik][igk] # index of Gk in G
-        Gk[1,igk] = G[1,ig] + k[1,ik]
-        Gk[2,igk] = G[2,ig] + k[2,ik]
-        Gk[3,igk] = G[3,ig] + k[3,ik]
-        Gk2[igk] = Gk[1,igk]^2 +  Gk[2,igk]^2 + Gk[3,igk]^2
+        Gk[1, igk] = G[1, ig] + k[1, ik]
+        Gk[2, igk] = G[2, ig] + k[2, ik]
+        Gk[3, igk] = G[3, ig] + k[3, ik]
+        Gk2[igk] = Gk[1, igk]^2 + Gk[2, igk]^2 + Gk[3, igk]^2
         # need Gk2? it is also calculated in Ylm_real_qe!
     end
 
-    ylm = zeros(Float64, Ngw[ik], (lmaxkb+1)^2)
+    ylm = zeros(Float64, Ngw[ik], (lmaxkb + 1)^2)
     # Ylm_real_qe accept l value starting from 0 (the actual 'physics' angular momentum number)
     Ylm_real_qe!(lmaxkb, Gk, ylm)
 
@@ -253,27 +253,27 @@ function _init_Vnl_KB!(
             #
             for igk in 1:Ngw[ik]
                 Gm = sqrt(Gk2[igk])
-                px = Gm/dq - floor(Int64, Gm/dq )
+                px = Gm / dq - floor(Int64, Gm / dq)
                 ux = 1.0 - px
                 vx = 2.0 - px
                 wx = 3.0 - px
-                i0 = floor(Int64, Gm/dq ) + 1
+                i0 = floor(Int64, Gm / dq) + 1
                 i1 = i0 + 1
                 i2 = i0 + 2
                 i3 = i0 + 3
-                vq[igk] = tab[i0,ibeta] * ux * vx * wx / 6.0 +
-                          tab[i1,ibeta] * px * vx * wx / 2.0 -
-                          tab[i2,ibeta] * px * ux * wx / 2.0 +
-                          tab[i3,ibeta] * px * ux * vx / 6.0
+                vq[igk] = tab[i0, ibeta] * ux * vx * wx / 6.0 +
+                          tab[i1, ibeta] * px * vx * wx / 2.0 -
+                          tab[i2, ibeta] * px * ux * wx / 2.0 +
+                          tab[i3, ibeta] * px * ux * vx / 6.0
             end
 
-      
+
             # add spherical harmonic part  (Y_lm(q)*f_l(q)) 
             for ih in 1:nh[isp]
-                if ibeta == indv[ih,isp]        
-                    lm = nhtolm[ih,isp]
+                if ibeta == indv[ih, isp]
+                    lm = nhtolm[ih, isp]
                     for igk in 1:Ngw[ik]
-                        vkb1[igk,ih] = ylm[igk,lm] * vq[igk]
+                        vkb1[igk, ih] = ylm[igk, lm] * vq[igk]
                     end
                 end
             end
@@ -294,21 +294,21 @@ function _init_Vnl_KB!(
             #
             for igk in 1:Ngw[ik]
                 # XXX use dot product here?
-                GkX = atpos[1,ia]*Gk[1,igk] + atpos[2,ia]*Gk[2,igk] + atpos[3,ia]*Gk[3,igk]
-                Sf[igk] = cos(GkX) - im*sin(GkX)
+                GkX = atpos[1, ia] * Gk[1, igk] + atpos[2, ia] * Gk[2, igk] + atpos[3, ia] * Gk[3, igk]
+                Sf[igk] = cos(GkX) - im * sin(GkX)
             end
-            
+
             for ih in 1:nh[isp]
                 # XXXX idx of KB projectors increment here ...
                 jkb = jkb + 1
                 # No need to offset nhtol by 1. It is already physics's l (start from l=0)
-                pref = (-im)^nhtol[ih,isp]
+                pref = (-im)^nhtol[ih, isp]
                 for igk in 1:Ngw[ik]
-                    Vnl_KB[igk,jkb] = vkb1[igk,ih] * Sf[igk] * pref
+                    Vnl_KB[igk, jkb] = vkb1[igk, ih] * Sf[igk] * pref
                 end
             end
         end
-    
+
     end
 
     return
@@ -334,23 +334,23 @@ function _prepare_aug_charges(
     qq_nt = zeros(Float64, nhm, nhm, Nspecies) # qq_nt, need qvan2
     qq_at = zeros(Float64, nhm, nhm, Natoms)
 
-    G0 = zeros(3,1) # Needs to be a two dimensional array
-    lmaxq = 2*lmaxkb + 1 # using 1-indexing
-    ylmk0 = zeros(Float64, 1, lmaxq*lmaxq)
+    G0 = zeros(3, 1) # Needs to be a two dimensional array
+    lmaxq = 2 * lmaxkb + 1 # using 1-indexing
+    ylmk0 = zeros(Float64, 1, lmaxq * lmaxq)
     _lmax = lmaxq - 1 # or 2*lmaxkb
     Ylm_real_qe!(_lmax, G0, ylmk0) # Ylm_real_qe accept l value starting from 0
     qgm = zeros(ComplexF64, 1)
     for isp in 1:Nspecies
         for ih in 1:nh[isp], jh in ih:nh[isp]
-            qvan2!( indv, nhtolm, lpl, lpx, ap, qradG, ih, jh, isp, [0.0], ylmk0, qgm )
-            qq_nt[ih,jh,isp] = pw.CellVolume * real(qgm[1])
-            qq_nt[jh,ih,isp] = pw.CellVolume * real(qgm[1])
+            qvan2!(indv, nhtolm, lpl, lpx, ap, qradG, ih, jh, isp, [0.0], ylmk0, qgm)
+            qq_nt[ih, jh, isp] = pw.CellVolume * real(qgm[1])
+            qq_nt[jh, ih, isp] = pw.CellVolume * real(qgm[1])
         end
     end
 
     # finally we set the atomic specific qq_at matrices
     for ia in 1:Natoms
-        @views qq_at[:,:,ia] = qq_nt[:,:,atm2species[ia]]
+        @views qq_at[:, :, ia] = qq_nt[:, :, atm2species[ia]]
     end
 
     return qradG, qq_nt, qq_at
@@ -361,43 +361,43 @@ end
 
 # From aainit of QE-6.6
 # lli = lmaxkb + 1
-function _calc_clebsch_gordan( lmaxkb::Int64 )
+function _calc_clebsch_gordan(lmaxkb::Int64)
 
     lli = lmaxkb + 1
 
     # Those are parameters (HARDCODED)
-    lmaxx  = 3         # max non local angular momentum (l=0 to lmaxx)
-    lqmax = 2*lmaxx + 1  # max number of angular momenta of Q
+    lmaxx = 3         # max non local angular momentum (l=0 to lmaxx)
+    lqmax = 2 * lmaxx + 1  # max number of angular momenta of Q
 
     # maximum number of combined angular momentum
     nlx = (lmaxx + 1)^2
     # maximum magnetic angular momentum of Q
-    mx = 2*lqmax - 1
+    mx = 2 * lqmax - 1
 
-    llx = (2*lli - 1)^2
+    llx = (2 * lli - 1)^2
 
-    @assert (2*lli-1) <= lqmax
+    @assert (2 * lli - 1) <= lqmax
     @assert lli >= 0
-    @assert (lli*lli) <= nlx
+    @assert (lli * lli) <= nlx
 
     r = zeros(Float64, 3, llx)
     for ir in 1:llx
-        c = 2.0*rand() - 1.0
+        c = 2.0 * rand() - 1.0
         s = sqrt(1.0 - c^2)
         ϕ = 2π * rand()
-        r[1,ir] = s * cos(ϕ)
-        r[2,ir] = s * sin(ϕ)
-        r[3,ir] = c
+        r[1, ir] = s * cos(ϕ)
+        r[2, ir] = s * sin(ϕ)
+        r[3, ir] = c
     end
 
     # generate the real spherical harmonics for the array: ylm(ir,lm)
     Ylm = zeros(Float64, llx, llx)
-     _lmax = round(Int64, sqrt(llx) - 1)
+    _lmax = round(Int64, sqrt(llx) - 1)
     Ylm_real_qe!(_lmax, r, Ylm) # Ylm_real_qe accept l value starting from 0
     Ylminv = inv(Ylm) # The inverse
 
     # Clebsch-Gordan coefficients for spherical harmonics
-    ap = zeros(Float64, lqmax*lqmax, nlx, nlx)
+    ap = zeros(Float64, lqmax * lqmax, nlx, nlx)
     # for each pair of combined momenta lm(1),lm(2): 
     lpx = zeros(Int64, nlx, nlx)      # maximum combined angular momentum LM
     lpl = zeros(Int64, nlx, nlx, mx)  # list of combined angular momenta  LM
@@ -407,16 +407,16 @@ function _calc_clebsch_gordan( lmaxkb::Int64 )
     for li in 1:lli*lli
         #println()
         for lj in 1:lli*lli
-            lpx[li,lj] = 0
+            lpx[li, lj] = 0
             for l in 1:llx
-                ap[l,li,lj] = _compute_ap(l, li, lj, llx, Ylm, Ylminv)
-                if abs(ap[l,li,lj]) > 1e-3
-                    lpx[li,lj] = lpx[li,lj] + 1   # increment
-                    if lpx[li,lj] > mx
+                ap[l, li, lj] = _compute_ap(l, li, lj, llx, Ylm, Ylminv)
+                if abs(ap[l, li, lj]) > 1e-3
+                    lpx[li, lj] = lpx[li, lj] + 1   # increment
+                    if lpx[li, lj] > mx
                         println("Error: mx dimension too small: lpx(li,lj)")
                         error("Error in calc_clebsch_gordan")
                     end
-                    lpl[li, lj, lpx[li,lj]] = l
+                    lpl[li, lj, lpx[li, lj]] = l
                     #@printf("%4d %4d %4d %18.10f\n", l, li, lj, ap[l,li,lj])
                 end # if
             end
@@ -427,10 +427,10 @@ function _calc_clebsch_gordan( lmaxkb::Int64 )
 
 end
 
-function _compute_ap(l,li,lj,llx,ylm,mly)
+function _compute_ap(l, li, lj, llx, ylm, mly)
     res = 0.0
     for i in 1:llx
-        res += mly[l,i]*ylm[i,li]*ylm[i,lj]
+        res += mly[l, i] * ylm[i, li] * ylm[i, lj]
     end
     return res
 end
@@ -442,7 +442,7 @@ function _calc_qradG(
 )
     CellVolume = pw.CellVolume
     Nspecies = length(pspots)
-    prefr = 4π/CellVolume
+    prefr = 4π / CellVolume
     ecutrho = pw.ecutrho
 
     ndm = 0
@@ -455,21 +455,21 @@ function _calc_qradG(
     qnorm = 0.0 # XXX HARDCODED, no k-points norm of (q + k) ?
     dq = 0.01 # XXX HARDCODED
     cell_factor = 1.0 # hardcoded
-    nqxq = floor(Int64, sqrt(2*ecutrho)/dq + 4) # factor of 2 in 2*ecutrho (convert to Ry)
+    nqxq = floor(Int64, sqrt(2 * ecutrho) / dq + 4) # factor of 2 in 2*ecutrho (convert to Ry)
 
     besr = zeros(Float64, ndm)
     aux = zeros(Float64, ndm)
     # Radial Fourier transform of
-    qradG = Array{Array{Float64,3},1}(undef,Nspecies)
+    qradG = Array{Array{Float64,3},1}(undef, Nspecies)
     for isp in 1:Nspecies
         Nproj = pspots[isp].Nproj
-        Nn2 = round(Int64, Nproj*(Nproj+1)/2)
+        Nn2 = round(Int64, Nproj * (Nproj + 1) / 2)
         # Determine lmaxq
         lmaxkb = -1
         for i in 1:pspots[isp].Nproj
             lmaxkb = max(lmaxkb, pspots[isp].proj_l[i])
         end
-        lmaxq = 2*lmaxkb + 1
+        lmaxq = 2 * lmaxkb + 1
         qradG[isp] = zeros(Float64, nqxq, Nn2, lmaxq)
     end
     # third dimension can be changed to (lmaxkb[isp] + 1)
@@ -492,32 +492,32 @@ function _calc_qradG(
                 q = (iq - 1) * dq
                 # here we compute the spherical bessel function for each q_i
                 for ir in 1:psp.kkbeta
-                    besr[ir] = sphericalbesselj(l, q*psp.r[ir])
+                    besr[ir] = sphericalbesselj(l, q * psp.r[ir])
                 end
                 #
                 for nb in 1:psp.Nproj
                     # the Q are symmetric w.r.t indices
                     for mb in nb:psp.Nproj
-                        ijv = round(Int64, mb*(mb - 1)/2) + nb
+                        ijv = round(Int64, mb * (mb - 1) / 2) + nb
                         lnb = psp.proj_l[nb]
                         lmb = psp.proj_l[mb]
                         # Selection rule
-                        cond1 = l >= abs( lnb - lmb )
-                        cond2 = l <=      lnb + lmb
+                        cond1 = l >= abs(lnb - lmb)
+                        cond2 = l <= lnb + lmb
                         cond3 = mod(l + lnb + lmb, 2) == 0
                         # XXX: Check qfuncl for this conditions?
                         if cond1 & cond2 & cond3
                             for ir in 1:psp.kkbeta
-                                aux[ir] = besr[ir] * psp.qfuncl[ir,ijv,l+1]
+                                aux[ir] = besr[ir] * psp.qfuncl[ir, ijv, l+1]
                             end
                             # and then we integrate with all the Q functions
-                            qradG[isp][iq,ijv,l+1] = PWDFT.integ_simpson( psp.kkbeta, aux, psp.rab )
+                            qradG[isp][iq, ijv, l+1] = PWDFT.integ_simpson(psp.kkbeta, aux, psp.rab)
                         end
                     end
                 end # igl
             end # l
         end
-        qradG[isp][:,:,:] = 4*qradG[isp][:,:,:]*prefr
+        qradG[isp][:, :, :] = 4 * qradG[isp][:, :, :] * prefr
         # Factor of 4 to fix the unit of Deeq and op_S
     end
     return qradG
@@ -536,12 +536,12 @@ end
 
 
 import Base: show
-function show( io::IO, pspotNL::PsPotNL_UPF )
-    
+function show(io::IO, pspotNL::PsPotNL_UPF)
+
     println("------------")
     println("PsPotNL_UPF:")
     println("------------")
-    
+
     println("lmaxx   = ", pspotNL.lmaxx)
     println("lqmax   = ", pspotNL.lqmax)
     println("lmaxkb  = ", pspotNL.lmaxkb)

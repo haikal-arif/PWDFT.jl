@@ -1,52 +1,52 @@
 #
 # In-place version, input 3d data as 3d array
 #
-function G_to_R!( pw, fG::Array{ComplexF64,3} )
-    pw.planbw*fG
+function G_to_R!(pw, fG::Array{ComplexF64,3})
+    pw.planbw * fG
     return
 end
 
-function R_to_G!( pw, fR::Array{ComplexF64,3} )
-    pw.planfw*fR
+function R_to_G!(pw, fR::Array{ComplexF64,3})
+    pw.planfw * fR
     return
 end
 
 #
 # Return new array, input 3d data as 3d array
 #
-function G_to_R( pw, fG::Array{ComplexF64,3} )
+function G_to_R(pw, fG::Array{ComplexF64,3})
     ff = copy(fG)
-    pw.planbw*ff
+    pw.planbw * ff
     return ff
 end
 
-function R_to_G( pw, fR::Array{ComplexF64,3} )
+function R_to_G(pw, fR::Array{ComplexF64,3})
     ff = copy(fR)
-    pw.planfw*ff
+    pw.planfw * ff
     return ff
 end
 
 #
 # In-place version, input 3d data as column vector
 #
-function G_to_R!( pw, fG::AbstractVector{ComplexF64}; smooth=false )
+function G_to_R!(pw, fG::AbstractVector{ComplexF64}; smooth=false)
     if smooth
         ff = reshape(fG, pw.Nss)
-        pw.planbws*ff
+        pw.planbws * ff
     else
         ff = reshape(fG, pw.Ns)
-        pw.planbw*ff
+        pw.planbw * ff
     end
     return
 end
 
-function R_to_G!( pw, fR::AbstractVector{ComplexF64}; smooth=false )
+function R_to_G!(pw, fR::AbstractVector{ComplexF64}; smooth=false)
     if smooth
         ff = reshape(fR, pw.Nss)
-        pw.planfws*ff
+        pw.planfws * ff
     else
         ff = reshape(fR, pw.Ns)
-        pw.planfw*ff
+        pw.planfw * ff
     end
     return
 end
@@ -55,17 +55,17 @@ end
 #
 # Return a new array
 #
-function G_to_R( pw, fG::AbstractVector{ComplexF64} )
+function G_to_R(pw, fG::AbstractVector{ComplexF64})
     ff = copy(fG)
     ff = reshape(ff, pw.Ns)
-    pw.planbw*ff
+    pw.planbw * ff
     return reshape(ff, prod(pw.Ns))
 end
 
-function R_to_G( pw, fR::AbstractVector{ComplexF64} )
+function R_to_G(pw, fR::AbstractVector{ComplexF64})
     ff = copy(fR)
     ff = reshape(fR, pw.Ns)
-    pw.planfw*ff
+    pw.planfw * ff
     return reshape(ff, prod(pw.Ns))
 end
 
@@ -73,10 +73,10 @@ end
 #
 # used in Poisson solver
 #
-function R_to_G( pw, fR_::AbstractVector{Float64} )
+function R_to_G(pw, fR_::AbstractVector{Float64})
     fR = convert(Array{ComplexF64,1}, fR_) # This will make a copy
     ff = reshape(fR, pw.Ns)
-    pw.planfw*ff
+    pw.planfw * ff
     return reshape(ff, prod(pw.Ns))
 end
 
@@ -84,11 +84,11 @@ end
 #
 # Used in calc_rhoe
 #
-function G_to_R!( pw, fG::Matrix{ComplexF64} )
+function G_to_R!(pw, fG::Matrix{ComplexF64})
     plan = pw.planbw
-    for i in 1:size(fG,2)
-        @views ff = reshape(fG[:,i], pw.Ns)
-        pw.planbw*ff
+    for i in 1:size(fG, 2)
+        @views ff = reshape(fG[:, i], pw.Ns)
+        pw.planbw * ff
     end
     return
 end
@@ -98,46 +98,46 @@ end
 # Using fft and ifft directly
 #
 
-function G_to_R( Ns::Tuple{Int64,Int64,Int64}, fG::Array{ComplexF64,1} )
-    out = reshape( ifft( reshape(fG,Ns) ),size(fG) )
+function G_to_R(Ns::Tuple{Int64,Int64,Int64}, fG::Array{ComplexF64,1})
+    out = reshape(ifft(reshape(fG, Ns)), size(fG))
 end
 
 # without reshape
-function G_to_R( Ns::Tuple{Int64,Int64,Int64}, fG::Array{ComplexF64,3} )
+function G_to_R(Ns::Tuple{Int64,Int64,Int64}, fG::Array{ComplexF64,3})
     out = ifft(fG)
 end
 
 # multicolumn
-function G_to_R( Ns::Tuple{Int64,Int64,Int64}, fG::Array{ComplexF64,2} )
+function G_to_R(Ns::Tuple{Int64,Int64,Int64}, fG::Array{ComplexF64,2})
     Npoints = prod(Ns)
-    out = zeros( ComplexF64, size(fG) ) # Is this safe?
+    out = zeros(ComplexF64, size(fG)) # Is this safe?
     for ic = 1:size(fG)[2]
-        @views out[:,ic] = reshape( ifft( reshape(fG[:,ic],Ns) ), Npoints )
+        @views out[:, ic] = reshape(ifft(reshape(fG[:, ic], Ns)), Npoints)
     end
     return out
 end
 
-function R_to_G( Ns::Tuple{Int64,Int64,Int64}, fR::Array{ComplexF64,1} )
-    out = reshape( fft( reshape(fR,Ns) ), size(fR) )
+function R_to_G(Ns::Tuple{Int64,Int64,Int64}, fR::Array{ComplexF64,1})
+    out = reshape(fft(reshape(fR, Ns)), size(fR))
 end
 
 # without reshape
-function R_to_G( Ns::Tuple{Int64,Int64,Int64}, fR::Array{ComplexF64,3} )
+function R_to_G(Ns::Tuple{Int64,Int64,Int64}, fR::Array{ComplexF64,3})
     out = fft(fR)
 end
 
 # In case we forget to convert the input, we convert it in this version
-function R_to_G( Ns::Tuple{Int64,Int64,Int64}, fR_::Array{Float64,1} )
-    fR = convert(Array{ComplexF64,1},fR_)
-    out = reshape( fft( reshape(fR,Ns) ), size(fR) )
+function R_to_G(Ns::Tuple{Int64,Int64,Int64}, fR_::Array{Float64,1})
+    fR = convert(Array{ComplexF64,1}, fR_)
+    out = reshape(fft(reshape(fR, Ns)), size(fR))
 end
-    
-function R_to_G( Ns::Tuple{Int64,Int64,Int64}, fR::Array{ComplexF64,2} )
+
+function R_to_G(Ns::Tuple{Int64,Int64,Int64}, fR::Array{ComplexF64,2})
     Npoints = prod(Ns)
     Ncol = size(fR)[2]
-    out = zeros( ComplexF64, size(fR) )
+    out = zeros(ComplexF64, size(fR))
     for ic = 1:Ncol
-        out[:,ic] = reshape( fft( reshape(fR[:,ic],Ns) ), Npoints )
+        out[:, ic] = reshape(fft(reshape(fR[:, ic], Ns)), Npoints)
     end
     return out
 end

@@ -5,7 +5,7 @@ function calc_epsxc_Vxc_VWN(
     Nspin = size(Rhoe, 2)
     @assert Nspin == 1
     if Nspin == 1
-        return calc_epsxc_Vxc_VWN( xc_calc, Rhoe[:,1] )
+        return calc_epsxc_Vxc_VWN(xc_calc, Rhoe[:, 1])
     end
 end
 
@@ -16,10 +16,10 @@ function calc_epsxc_Vxc_VWN(
 
     Npoints = size(Rhoe, 1)
     Nspin = 1
-    eps_x = zeros(Float64,Npoints)
-    eps_c = zeros(Float64,Npoints)
-    v_x = zeros(Float64,Npoints)
-    v_c = zeros(Float64,Npoints)
+    eps_x = zeros(Float64, Npoints)
+    eps_c = zeros(Float64, Npoints)
+    v_x = zeros(Float64, Npoints)
+    v_c = zeros(Float64, Npoints)
 
 
     ptr = Libxc_xc_func_alloc()
@@ -44,12 +44,12 @@ function calc_epsxc_Vxc_VWN(
 end
 
 
-function calc_epsxc_VWN( xc_calc::LibxcXCCalculator, Rhoe::Array{Float64,1} )
+function calc_epsxc_VWN(xc_calc::LibxcXCCalculator, Rhoe::Array{Float64,1})
 
     Npoints = size(Rhoe)[1]
     Nspin = 1
-    eps_x = zeros(Float64,Npoints)
-    eps_c = zeros(Float64,Npoints)
+    eps_x = zeros(Float64, Npoints)
+    eps_c = zeros(Float64, Npoints)
 
     ptr = Libxc_xc_func_alloc()
     # exchange part
@@ -76,27 +76,27 @@ end
 Calculate XC energy per particle using VWN functional.
 This function works for both spin-polarized and spin-unpolarized system.
 """
-function calc_epsxc_VWN( xc_calc::LibxcXCCalculator, Rhoe::Array{Float64,2} )
+function calc_epsxc_VWN(xc_calc::LibxcXCCalculator, Rhoe::Array{Float64,2})
 
     Nspin = size(Rhoe)[2]
     Npoints = size(Rhoe)[1]
 
     if Nspin == 1
-        return calc_epsxc_VWN( xc_calc, Rhoe[:,1] )
+        return calc_epsxc_VWN(xc_calc, Rhoe[:, 1])
     end
 
     # Do the transpose manually
-    Rhoe_tmp = zeros(2*Npoints)
+    Rhoe_tmp = zeros(2 * Npoints)
     ipp = 0
     for ip = 1:2:2*Npoints
         ipp = ipp + 1
-        Rhoe_tmp[ip] = Rhoe[ipp,1]
-        Rhoe_tmp[ip+1] = Rhoe[ipp,2]
+        Rhoe_tmp[ip] = Rhoe[ipp, 1]
+        Rhoe_tmp[ip+1] = Rhoe[ipp, 2]
     end
 
 
-    eps_x = zeros(Float64,Npoints)
-    eps_c = zeros(Float64,Npoints)
+    eps_x = zeros(Float64, Npoints)
+    eps_c = zeros(Float64, Npoints)
 
     ptr = Libxc_xc_func_alloc()
     # exchange part
@@ -119,12 +119,12 @@ function calc_epsxc_VWN( xc_calc::LibxcXCCalculator, Rhoe::Array{Float64,2} )
 end
 
 
-function calc_Vxc_VWN( xc_calc::LibxcXCCalculator, Rhoe::Array{Float64,1} )
+function calc_Vxc_VWN(xc_calc::LibxcXCCalculator, Rhoe::Array{Float64,1})
 
     Npoints = size(Rhoe)[1]
     Nspin = 1
-    v_x = zeros(Float64,Npoints)
-    v_c = zeros(Float64,Npoints)
+    v_x = zeros(Float64, Npoints)
+    v_c = zeros(Float64, Npoints)
 
     ptr = Libxc_xc_func_alloc()
     # exchange part
@@ -151,26 +151,26 @@ end
 Calculate XC potential using VWN functional.
 This function works for both spin-polarized and spin-unpolarized system.
 """
-function calc_Vxc_VWN( xc_calc::LibxcXCCalculator, Rhoe::Array{Float64,2} )
+function calc_Vxc_VWN(xc_calc::LibxcXCCalculator, Rhoe::Array{Float64,2})
 
     Nspin = size(Rhoe)[2]
     if Nspin == 1
-        return calc_Vxc_VWN( xc_calc, Rhoe[:,1] )
+        return calc_Vxc_VWN(xc_calc, Rhoe[:, 1])
     end
 
     Npoints = size(Rhoe)[1]
 
-    Vxc = zeros( Float64, Npoints, 2 )
-    V_x = zeros( Float64, 2*Npoints )
-    V_c = zeros( Float64, 2*Npoints )
+    Vxc = zeros(Float64, Npoints, 2)
+    V_x = zeros(Float64, 2 * Npoints)
+    V_c = zeros(Float64, 2 * Npoints)
 
     # This is the transposed version of Rhoe, use copy
-    Rhoe_tmp = zeros(2*Npoints)
+    Rhoe_tmp = zeros(2 * Npoints)
     ipp = 0
     for ip = 1:2:2*Npoints
         ipp = ipp + 1
-        Rhoe_tmp[ip] = Rhoe[ipp,1]
-        Rhoe_tmp[ip+1] = Rhoe[ipp,2]
+        Rhoe_tmp[ip] = Rhoe[ipp, 1]
+        Rhoe_tmp[ip+1] = Rhoe[ipp, 2]
     end
 
     ptr = Libxc_xc_func_alloc()
@@ -193,8 +193,8 @@ function calc_Vxc_VWN( xc_calc::LibxcXCCalculator, Rhoe::Array{Float64,2} )
     ipp = 0
     for ip = 1:2:2*Npoints
         ipp = ipp + 1
-        Vxc[ipp,1] = V_x[ip] + V_c[ip]
-        Vxc[ipp,2] = V_x[ip+1] + V_c[ip+1]
+        Vxc[ipp, 1] = V_x[ip] + V_c[ip]
+        Vxc[ipp, 2] = V_x[ip+1] + V_c[ip+1]
     end
     return Vxc
 end

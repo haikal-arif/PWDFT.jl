@@ -11,26 +11,26 @@ function calc_Focc(
     Nspin::Int64
 )
 
-    E_fermi = find_E_fermi( Nelectrons, wk, kT, evals, Nspin )
-  
+    E_fermi = find_E_fermi(Nelectrons, wk, kT, evals, Nspin)
+
     Nkspin = size(evals)[2]
     Nstates = size(evals)[1]
-  
-    Focc = zeros(Nstates,Nkspin)
+
+    Focc = zeros(Nstates, Nkspin)
 
     for ikspin = 1:Nkspin, ist = 1:Nstates
-        Focc[ist,ikspin] = wgauss( (E_fermi - evals[ist,ikspin])/kT )
+        Focc[ist, ikspin] = wgauss((E_fermi - evals[ist, ikspin]) / kT)
     end
-  
+
     if Nspin == 1
-        return 2.0*Focc, E_fermi
+        return 2.0 * Focc, E_fermi
     else
         return Focc, E_fermi
     end
-  
+
 end
 
-function sum_kFocc( wk, Focc, Nspin )
+function sum_kFocc(wk, Focc, Nspin)
     Nstates = size(Focc)[1]
     Nkspin = size(Focc)[2]
 
@@ -38,13 +38,13 @@ function sum_kFocc( wk, Focc, Nspin )
 
     s = 0.0
     for ikspin = 1:Nkspin, ist = 1:Nstates
-        s = s + wks[ikspin]*Focc[ist,ikspin]
+        s = s + wks[ikspin] * Focc[ist, ikspin]
     end
     return s
 end
 
 
-function check_Focc( Focc::Array{Float64,1}; Nspin=1 )
+function check_Focc(Focc::Array{Float64,1}; Nspin=1)
     if Nspin == 1
         for focc in Focc
             if focc > 2.0
@@ -67,9 +67,9 @@ end
 
 Compute Fermi distribution.
 """
-function wgauss( x::Float64 )
-# x = E_f - evals
-# only n=-99 is implemented
+function wgauss(x::Float64)
+    # x = E_f - evals
+    # only n=-99 is implemented
 
     MAXARG = 200.0
     if x < -MAXARG
@@ -77,7 +77,7 @@ function wgauss( x::Float64 )
     elseif x > MAXARG
         return 1.0
     else
-        return 1.0/(1.0 + exp(-x))
+        return 1.0 / (1.0 + exp(-x))
     end
 
 end
@@ -89,28 +89,28 @@ end
 Sum occupation numbers for a given set of Kohn-Sham eigenvalues up to `ene`.
 """
 function sumkg(
-  wk::Array{Float64,1},
-  kT::Float64,
-  evals::Array{Float64,2},
-  ene::Float64,
-  Nspin::Int64
+    wk::Array{Float64,1},
+    kT::Float64,
+    evals::Array{Float64,2},
+    ene::Float64,
+    Nspin::Int64
 )
 
     Nkspin = size(evals)[2]
     Nstates = size(evals)[1]
 
-    wks = repeat(wk,Nspin)
+    wks = repeat(wk, Nspin)
     if Nspin == 1
-        wks[:] = wks[:]*2
+        wks[:] = wks[:] * 2
     end
 
     ss = 0.0
     for ikspin = 1:Nkspin
         ss1 = 0.0
         for ist = 1:Nstates
-            ss1 = ss1 + wgauss( (ene - evals[ist,ikspin])/kT )
+            ss1 = ss1 + wgauss((ene - evals[ist, ikspin]) / kT)
         end
-        ss = ss + wks[ikspin]*ss1
+        ss = ss + wks[ikspin] * ss1
     end
 
     return ss
@@ -122,50 +122,50 @@ end
 Find E_fermi for a given set of Kohn-Sham eigenvalues.
 """
 function find_E_fermi(
-  Nelectrons::Float64,
-  wk::Array{Float64,1},
-  kT::Float64,
-  evals::Array{Float64,2},
-  Nspin::Int64;
-  NiterMax=300, verbose=false
+    Nelectrons::Float64,
+    wk::Array{Float64,1},
+    kT::Float64,
+    evals::Array{Float64,2},
+    Nspin::Int64;
+    NiterMax=300, verbose=false
 )
 
     Nkspin = size(evals)[2]
     Nstates = size(evals)[1]
 
     # determine lower and upper bound for bisection
-    Elw = evals[1,1]
-    Eup = evals[Nstates,1]
+    Elw = evals[1, 1]
+    Eup = evals[Nstates, 1]
     for ikspin = 1:Nkspin
-        Elw = min( Elw, evals[1,ikspin] )
-        Eup = max( Eup, evals[Nstates,ikspin] )
+        Elw = min(Elw, evals[1, ikspin])
+        Eup = max(Eup, evals[Nstates, ikspin])
     end
-    Elw = Elw - 2*kT
-    Eup = Eup + 2*kT
+    Elw = Elw - 2 * kT
+    Eup = Eup + 2 * kT
 
-    sumklw = sumkg( wk, kT, evals, Elw, Nspin )
-    sumkup = sumkg( wk, kT, evals, Eup, Nspin )
+    sumklw = sumkg(wk, kT, evals, Elw, Nspin)
+    sumkup = sumkg(wk, kT, evals, Eup, Nspin)
 
     SMALL = 1e-10
 
-    if ( (sumkup - Nelectrons) < -eps() ) ||
-       ( (sumklw - Nelectrons) >  eps() )
+    if ((sumkup - Nelectrons) < -eps()) ||
+       ((sumklw - Nelectrons) > eps())
         error("Bounds for E_fermi is not found")
     end
 
-    Ef = 0.5*(Eup + Elw)
+    Ef = 0.5 * (Eup + Elw)
     Ef_old = Ef
     for iter = 1:NiterMax
-        sumkmid = sumkg( wk, kT, evals, Ef, Nspin )
-        if abs(sumkmid-Nelectrons) < SMALL
+        sumkmid = sumkg(wk, kT, evals, Ef, Nspin)
+        if abs(sumkmid - Nelectrons) < SMALL
             return Ef
-        elseif sumkmid-Nelectrons < -SMALL
+        elseif sumkmid - Nelectrons < -SMALL
             Elw = Ef
         else
             Eup = Ef
         end
-        Ef = 0.5*(Eup + Elw)
-        diff_Ef = abs(Ef-Ef_old)
+        Ef = 0.5 * (Eup + Elw)
+        diff_Ef = abs(Ef - Ef_old)
         if verbose
             @printf("find_E_fermi: %3d %18.10f %18.10f %18.10e\n", iter, Ef, sumkmid, diff_Ef)
         end
@@ -177,7 +177,7 @@ function find_E_fermi(
 
     @printf("WARNING: Ef is not found after %d iterations\n", NiterMax)
     return Ef
-    
+
 end
 
 
@@ -195,9 +195,9 @@ implemented (for n=-99 only).
 function w1gauss(x)
     # n = -99 other cases are not yet implemented
     if abs(x) <= 36.0
-        f = 1.0/(1.0 + exp(-x))
+        f = 1.0 / (1.0 + exp(-x))
         onemf = 1.0 - f
-        return f*log(f) + onemf*log(onemf)
+        return f * log(f) + onemf * log(onemf)
     else
         return 0.0
     end
@@ -218,24 +218,24 @@ Calculate -TS term of the Kohn-Sham total energy.
 - `Nspin`: number of spin component(s)
 """
 function calc_entropy(
-  wk::Array{Float64,1},
-  kT::Float64,
-  evals::Array{Float64,2},
-  E_fermi::Float64,
-  Nspin::Int64
-)    
+    wk::Array{Float64,1},
+    kT::Float64,
+    evals::Array{Float64,2},
+    E_fermi::Float64,
+    Nspin::Int64
+)
     Nkspin = size(evals)[2]
     Nstates = size(evals)[1]
 
-    wks = repeat(wk,Nspin)
+    wks = repeat(wk, Nspin)
     if Nspin == 1
-        wks[:] = wks[:]*2
+        wks[:] = wks[:] * 2
     end
 
     mTS = 0.0
     for ikspin = 1:Nkspin
         for ist = 1:Nstates
-            mTS = mTS + wks[ikspin]*kT*w1gauss( (E_fermi - evals[ist,ikspin])/kT )
+            mTS = mTS + wks[ikspin] * kT * w1gauss((E_fermi - evals[ist, ikspin]) / kT)
         end
     end
     return mTS
@@ -250,25 +250,25 @@ function sum_upto_E_fermi(
 )
     Nstates = size(Focc)[1]
     Nkspin = size(Focc)[2]
-    Nkpt = round(Int64, Nkspin/Nspin)
+    Nkpt = round(Int64, Nkspin / Nspin)
 
     sFocc = 0.0
     for ispin = 1:Nspin
-    for ik = 1:Nkpt
-        ikspin = ik + (ispin-1)*Nspin
-        ss = 0.0
-        for ist = 1:Nstates
-            if evals[ist,ikspin] <= E_fermi
-                ss = ss + Focc[ist,ikspin]
+        for ik = 1:Nkpt
+            ikspin = ik + (ispin - 1) * Nspin
+            ss = 0.0
+            for ist = 1:Nstates
+                if evals[ist, ikspin] <= E_fermi
+                    ss = ss + Focc[ist, ikspin]
+                end
             end
+            sFocc = sFocc + wk[ik] * ss
         end
-        sFocc = sFocc + wk[ik]*ss
-    end
     end
     return sFocc
 end
 
-function sum_upto_E_fermi( Focc::Array{Float64,1}, evals::Array{Float64,1}, E_fermi::Float64 )
+function sum_upto_E_fermi(Focc::Array{Float64,1}, evals::Array{Float64,1}, E_fermi::Float64)
     sFocc = 0.0
     Nstates = size(Focc)[1]
     for ist = 1:Nstates

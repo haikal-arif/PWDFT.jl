@@ -1,39 +1,39 @@
-function diag_davidson( Ham::Hamiltonian, X0::Array{ComplexF64,2};
-                        tol=1e-5, NiterMax=100, verbose=false,
-                        verbose_last=false, Nstates_conv=0 )
+function diag_davidson(Ham::Hamiltonian, X0::Array{ComplexF64,2};
+    tol=1e-5, NiterMax=100, verbose=false,
+    verbose_last=false, Nstates_conv=0)
 
     X = copy(X0)
-    evals = diag_davidson!( Ham, X, tol=tol, NiterMax=NiterMax, verbose=verbose,
-                            verbose_last=verbose_last, Nstates_conv=Nstates_conv )
+    evals = diag_davidson!(Ham, X, tol=tol, NiterMax=NiterMax, verbose=verbose,
+        verbose_last=verbose_last, Nstates_conv=Nstates_conv)
     return evals, X
 end
 
 
-function diag_davidson!( Ham::Hamiltonian, psiks::BlochWavefunc;
-                         tol=1e-5, NiterMax=100, verbose=false,
-                         verbose_last=false, Nstates_conv=0 )
-    
+function diag_davidson!(Ham::Hamiltonian, psiks::BlochWavefunc;
+    tol=1e-5, NiterMax=100, verbose=false,
+    verbose_last=false, Nstates_conv=0)
+
     pw = Ham.pw
     electrons = Ham.electrons
     Nkpt = pw.gvecw.kpoints.Nkpt
     Nspin = electrons.Nspin
-    Nkspin = Nspin*Nkpt
+    Nkspin = Nspin * Nkpt
     Ngw = pw.gvecw.Ngw
     Nstates = electrons.Nstates
 
-    evals = zeros(Float64,Nstates,Nkspin)
+    evals = zeros(Float64, Nstates, Nkspin)
 
     for ispin = 1:Nspin
-    for ik = 1:Nkpt
-        Ham.ik = ik
-        Ham.ispin = ispin
-        ikspin = ik + (ispin - 1)*Nkpt
-        #
-        evals[:,ikspin] =
-        diag_davidson!( Ham, psiks[ikspin], tol=tol, NiterMax=NiterMax, verbose=verbose,
-                        verbose_last=verbose_last, Nstates_conv=Nstates_conv )
-        #
-    end
+        for ik = 1:Nkpt
+            Ham.ik = ik
+            Ham.ispin = ispin
+            ikspin = ik + (ispin - 1) * Nkpt
+            #
+            evals[:, ikspin] =
+                diag_davidson!(Ham, psiks[ikspin], tol=tol, NiterMax=NiterMax, verbose=verbose,
+                    verbose_last=verbose_last, Nstates_conv=Nstates_conv)
+            #
+        end
     end
 
     return evals
@@ -49,46 +49,46 @@ On return, X will be rewritten as the corresponding eigenvectors.
 
 **IMPORTANT** `X` must be orthonormalized before.
 """
-function diag_davidson!( Ham::Hamiltonian, X::Array{ComplexF64,2};
-                         tol=1e-5, NiterMax=100, verbose=false,
-                         verbose_last=false, Nstates_conv=0 )
-      
+function diag_davidson!(Ham::Hamiltonian, X::Array{ComplexF64,2};
+    tol=1e-5, NiterMax=100, verbose=false,
+    verbose_last=false, Nstates_conv=0)
+
 
     # get size info
     Nstates = size(X)[2]
-    Nbasis  = size(X)[1]
+    Nbasis = size(X)[1]
 
     @assert(Nstates >= 1)
-    
+
     if Nstates_conv == 0
         Nstates_conv = Nstates
     end
 
-    evals    = zeros(Float64, Nstates)
-    R        = zeros(ComplexF64, Nbasis, Nstates)
-    Hred     = zeros(ComplexF64, 2*Nstates, 2*Nstates)
-    Sred     = zeros(ComplexF64, 2*Nstates, 2*Nstates)
-    λ_red    = zeros(Float64, 2*Nstates)
-    X_red    = zeros(ComplexF64, 2*Nstates, 2*Nstates)
-    res      = zeros(Float64, Nstates)
+    evals = zeros(Float64, Nstates)
+    R = zeros(ComplexF64, Nbasis, Nstates)
+    Hred = zeros(ComplexF64, 2 * Nstates, 2 * Nstates)
+    Sred = zeros(ComplexF64, 2 * Nstates, 2 * Nstates)
+    λ_red = zeros(Float64, 2 * Nstates)
+    X_red = zeros(ComplexF64, 2 * Nstates, 2 * Nstates)
+    res = zeros(Float64, Nstates)
     res_norm = zeros(Float64, Nstates)
-    
-    devals    = zeros(Float64, Nstates)
+
+    devals = zeros(Float64, Nstates)
     evals_old = zeros(Float64, Nstates)
 
-    HX = op_H( Ham, X )
+    HX = op_H(Ham, X)
 
     # Initial eigenvalues
     for ist = 1:Nstates
-        evals[ist] = real( dot( X[:,ist], HX[:,ist] ) )
+        evals[ist] = real(dot(X[:, ist], HX[:, ist]))
     end
 
     # Calculate residuals
     for ist = 1:Nstates
         for ig = 1:Nbasis
-            R[ig,ist] = evals[ist]*X[ig,ist] - HX[ig,ist]
+            R[ig, ist] = evals[ist] * X[ig, ist] - HX[ig, ist]
         end
-        res[ist] = sqrt( dot( R[:,ist], R[:,ist] ) )
+        res[ist] = sqrt(dot(R[:, ist], R[:, ist]))
     end
 
     EPS = eps()
@@ -106,12 +106,12 @@ function diag_davidson!( Ham::Hamiltonian, X::Array{ComplexF64,2};
 
         for ist = 1:Nstates
             if EPS < res[ist]
-                res_norm[ist] = 1.0/res[ist]
+                res_norm[ist] = 1.0 / res[ist]
             else
                 println("res[ic] is too small")
             end
             for ig = 1:Nbasis
-                R[ig,ist] = res_norm[ist] * R[ig,ist]
+                R[ig, ist] = res_norm[ist] * R[ig, ist]
             end
         end
 
@@ -121,48 +121,48 @@ function diag_davidson!( Ham::Hamiltonian, X::Array{ComplexF64,2};
 
         # FIXME: Pull this outside the loop?
         if iter == 1
-            Hred[set1,set1] = X' * HX
+            Hred[set1, set1] = X' * HX
         else
-            Hred[1:Nstates,1:Nstates] .= 0.0 + im*0.0
+            Hred[1:Nstates, 1:Nstates] .= 0.0 + im * 0.0
             for ic = 1:Nstates
-                Hred[ic,ic] = evals[ic] + im*0.0 # use diagm ?
+                Hred[ic, ic] = evals[ic] + im * 0.0 # use diagm ?
             end
         end
 
-        Hred[set1,set2] = X' * HR
-        Hred[set2,set2] = R' * HR
-        Hred[set2,set1] = Hred[set1,set2]'
+        Hred[set1, set2] = X' * HR
+        Hred[set2, set2] = R' * HR
+        Hred[set2, set1] = Hred[set1, set2]'
 
-        Sred[set1,set1] = Matrix(Diagonal(ones(ComplexF64,Nstates)))
-        Sred[set1,set2] = X' * R
-        Sred[set2,set2] = R' * R
-        Sred[set2,set1] = Sred[set1,set2]'
+        Sred[set1, set1] = Matrix(Diagonal(ones(ComplexF64, Nstates)))
+        Sred[set1, set2] = X' * R
+        Sred[set2, set2] = R' * R
+        Sred[set2, set1] = Sred[set1, set2]'
 
-        Hred = 0.5*(Hred + Hred')
-        Sred = 0.5*(Sred + Sred')
+        Hred = 0.5 * (Hred + Hred')
+        Sred = 0.5 * (Sred + Sred')
 
-        λ_red, X_red = eigen( Hermitian(Hred), Hermitian(Sred) )
+        λ_red, X_red = eigen(Hermitian(Hred), Hermitian(Sred))
 
         evals = λ_red[1:Nstates]
 
-        devals = abs.( evals - evals_old )
-        nconv = length( findall( devals .< tol ) )
+        devals = abs.(evals - evals_old)
+        nconv = length(findall(devals .< tol))
 
-        X[:,:]  = X  * X_red[set1,set1] + R  * X_red[set2,set1]
-        HX = HX * X_red[set1,set1] + HR * X_red[set2,set1]
+        X[:, :] = X * X_red[set1, set1] + R * X_red[set2, set1]
+        HX = HX * X_red[set1, set1] + HR * X_red[set2, set1]
 
         # Calculate residuals
         for ist = 1:Nstates
             for ig = 1:Nbasis
-                R[ig,ist] = evals[ist]*X[ig,ist] - HX[ig,ist]
+                R[ig, ist] = evals[ist] * X[ig, ist] - HX[ig, ist]
             end
-            res[ist] = sqrt( dot( R[:,ist], R[:,ist] ) )
+            res[ist] = sqrt(dot(R[:, ist], R[:, ist]))
         end
-            
+
         if verbose
             @printf("\n")
             for ist = 1:Nstates
-                @printf("evals[%3d] = %18.10f, devals = %18.10e\n", ist, evals[ist], devals[ist] )
+                @printf("evals[%3d] = %18.10f, devals = %18.10e\n", ist, evals[ist], devals[ist])
             end
             @printf("iter %d nconv = %d\n", iter, nconv)
         end
@@ -184,7 +184,7 @@ function diag_davidson!( Ham::Hamiltonian, X::Array{ComplexF64,2};
     if verbose_last || verbose
         @printf("\nEigenvalues from diag_davidson:\n\n")
         for ist = 1:Nstates
-            @printf("evals[%3d] = %18.10f, devals = %18.10e\n", ist, evals[ist], devals[ist] )
+            @printf("evals[%3d] = %18.10f, devals = %18.10e\n", ist, evals[ist], devals[ist])
         end
     end
 

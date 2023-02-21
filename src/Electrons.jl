@@ -18,10 +18,10 @@ function Electrons()
     Nelectrons = 1
     Nstates = 1
     Nstates_occ = 1
-    Focc = zeros(Nstates,1) # Nkpt=1
-    ebands = zeros(Nstates,1) # use Nkpt=1
+    Focc = zeros(Nstates, 1) # Nkpt=1
+    ebands = zeros(Nstates, 1) # use Nkpt=1
     Nspin = 1
-    return Electrons( Nelectrons, Nstates, Nstates_occ, Focc, ebands, Nspin )
+    return Electrons(Nelectrons, Nstates, Nstates_occ, Focc, ebands, Nspin)
 end
 
 """
@@ -45,10 +45,10 @@ function Electrons(
     atoms::Atoms, pspots::Vector{T};
     Nspin=1, Nkpt=1,
     Nstates=-1, Nstates_empty=-1
-) where T <: AbstractPsPot
+) where {T<:AbstractPsPot}
     #
     return Electrons(
-        atoms, get_Zvals(pspots), 
+        atoms, get_Zvals(pspots),
         Nspin=Nspin, Nkpt=Nkpt, Nstates=Nstates, Nstates_empty=Nstates_empty
     )
 end
@@ -83,13 +83,13 @@ function Electrons(
 
     Nelectrons = get_Nelectrons(atoms, zvals)
 
-    is_odd = round(Int64,Nelectrons)%2 == 1
+    is_odd = round(Int64, Nelectrons) % 2 == 1
 
     # If Nstates is not specified and Nstates_empty == 0, we calculate
     # Nstates manually from Nelectrons
     if Nstates == -1
-        Nstates = round(Int64, Nelectrons/2)
-        if Nstates*2 < Nelectrons
+        Nstates = round(Int64, Nelectrons / 2)
+        if Nstates * 2 < Nelectrons
             Nstates = Nstates + 1
         end
         if Nstates_empty > 0
@@ -103,12 +103,12 @@ function Electrons(
             println("Please specify Nstates only or Nstates_empty only")
             error()
         end
-        NstatesMin = round(Int64, Nelectrons/2)
-        if NstatesMin*2 < Nelectrons
+        NstatesMin = round(Int64, Nelectrons / 2)
+        if NstatesMin * 2 < Nelectrons
             NstatesMin += 1
         end
         if Nstates < NstatesMin
-           @printf("Given Nstates is not enough: Nstates = %d, NstatesMin = %d", Nstates, NstatesMin)
+            @printf("Given Nstates is not enough: Nstates = %d, NstatesMin = %d", Nstates, NstatesMin)
         end
         if Nstates > NstatesMin
             Nstates_empty = Nstates - NstatesMin
@@ -122,43 +122,43 @@ function Electrons(
     #println("Nstates = ", Nstates)
     #println("Nstates_empty = ", Nstates_empty)
 
-    Focc = zeros(Float64,Nstates,Nkpt*Nspin)
-    ebands = zeros(Float64,Nstates,Nkpt*Nspin)
-    
+    Focc = zeros(Float64, Nstates, Nkpt * Nspin)
+    ebands = zeros(Float64, Nstates, Nkpt * Nspin)
+
     Nstates_occ = Nstates - Nstates_empty
 
     if Nspin == 1
         for ist in 1:Nstates_occ-1
-            Focc[ist,:] .= 2.0
+            Focc[ist, :] .= 2.0
         end
         if is_odd
-            Focc[Nstates_occ,:] .= 1.0
+            Focc[Nstates_occ, :] .= 1.0
         else
-            Focc[Nstates_occ,:] .= 2.0
+            Focc[Nstates_occ, :] .= 2.0
         end
     else
         for ist = 1:Nstates_occ-1
-            Focc[ist,:] .= 1.0
+            Focc[ist, :] .= 1.0
         end
         idx_up = 1:Nkpt
         if is_odd
             # assign only to the spin up
-            Focc[Nstates_occ,idx_up] .= 1.0
+            Focc[Nstates_occ, idx_up] .= 1.0
         else
-            Focc[Nstates_occ,:] .= 1.0
+            Focc[Nstates_occ, :] .= 1.0
         end
     end
 
     _check_Focc(Focc, Nkpt, Nelectrons)
 
-    return Electrons( Nelectrons, Nstates, Nstates_occ, Focc, ebands, Nspin )
+    return Electrons(Nelectrons, Nstates, Nstates_occ, Focc, ebands, Nspin)
 end
 
 
 function _check_Focc(Focc::Matrix{Float64}, Nkpt::Int64, Nelectrons)
-    sFocc = sum(Focc)/Nkpt
+    sFocc = sum(Focc) / Nkpt
     # Check if the generated Focc is consistent
-    if abs( sFocc - Nelectrons ) > eps()
+    if abs(sFocc - Nelectrons) > eps()
         @printf("sum Focc = %f, Nelectrons = %f\n", sFocc, Nelectrons)
         error(@sprintf("ERROR diff sum(Focc) and Nelectrons is not small\n"))
     end
@@ -179,27 +179,27 @@ function Electrons(
     # Nstates_extra is always empty
 
     Nspin = 2
-    Nelectrons = get_Nelectrons(atoms,Pspots)
-    @assert round(Int64,Nelectrons) == sum(NelectronsSpin)
+    Nelectrons = get_Nelectrons(atoms, Pspots)
+    @assert round(Int64, Nelectrons) == sum(NelectronsSpin)
 
     Nstates_occ = maximum(NelectronsSpin)
     Nstates = Nstates_occ + Nstates_extra
 
-    Focc = zeros(Float64,Nstates,Nkpt*Nspin)
-    ebands = zeros(Float64,Nstates,Nkpt*Nspin)
+    Focc = zeros(Float64, Nstates, Nkpt * Nspin)
+    ebands = zeros(Float64, Nstates, Nkpt * Nspin)
 
     for ik in 1:Nkpt
         for i in 1:NelectronsSpin[1]
-            Focc[i,ik] = 1.0
+            Focc[i, ik] = 1.0
         end
         for i in 1:NelectronsSpin[2]
-            Focc[i,Nkpt+ik] = 1.0
+            Focc[i, Nkpt+ik] = 1.0
         end
     end
 
     _check_Focc(Focc, Nkpt, Nelectrons)
 
-    return Electrons( Nelectrons, Nstates, Nstates_occ, Focc, ebands, Nspin )
+    return Electrons(Nelectrons, Nstates, Nstates_occ, Focc, ebands, Nspin)
 end
 
 
@@ -208,7 +208,7 @@ Returns number of electrons for a given `atoms::Atoms` and
 `Pspots::Array{AbstractPsPot,1}`. Number of electrons will be
 calculated as sum of valence electrons for each atom.
 """
-function get_Nelectrons( atoms::Atoms, pspots::Vector{T} ) where T <: AbstractPsPot
+function get_Nelectrons(atoms::Atoms, pspots::Vector{T}) where {T<:AbstractPsPot}
     Natoms = atoms.Natoms
     atm2species = atoms.atm2species
     Nelectrons = 0.0
@@ -221,7 +221,7 @@ end
 
 
 
-function get_Nelectrons( atoms::Atoms, zvals::Vector{Float64} ) 
+function get_Nelectrons(atoms::Atoms, zvals::Vector{Float64})
     @assert length(zvals) == atoms.Nspecies
     Natoms = atoms.Natoms
     atm2species = atoms.atm2species
@@ -238,7 +238,7 @@ end
 """
 Returns array `Zvals[1:Nspecies]` from a given `PsPots`.
 """
-function get_Zvals( pspots::Vector{T} ) where T <: AbstractPsPot
+function get_Zvals(pspots::Vector{T}) where {T<:AbstractPsPot}
     Nspecies = length(pspots)
     zvals = zeros(Float64, Nspecies)
     for isp in 1:Nspecies

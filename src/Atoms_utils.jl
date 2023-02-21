@@ -1,27 +1,27 @@
 const ZATOMS = Dict(
-    "H"  => 1,
+    "H" => 1,
     "He" => 2,
     "Li" => 3,
     "Be" => 4,
-    "B"  => 5,
-    "C"  => 6,
-    "N"  => 7,
-    "O"  => 8,
-    "F"  => 9,
+    "B" => 5,
+    "C" => 6,
+    "N" => 7,
+    "O" => 8,
+    "F" => 9,
     "Ne" => 10,
     "Na" => 11,
     "Mg" => 12,
     "Al" => 13,
     "Si" => 14,
-    "P"  => 15,
-    "S"  => 16,
+    "P" => 15,
+    "S" => 16,
     "Cl" => 17,
     "Ar" => 18,
-    "K"  => 19,
+    "K" => 19,
     "Ca" => 20,
     "Sc" => 21,
     "Ti" => 22,
-    "V"  => 23,
+    "V" => 23,
     "Cr" => 24,
     "Mn" => 25,
     "Fe" => 26,
@@ -37,7 +37,7 @@ const ZATOMS = Dict(
     "Kr" => 36,
     "Rb" => 37,
     "Sr" => 38,
-    "Y"  => 39,
+    "Y" => 39,
     "Zr" => 40,
     "Nb" => 41,
     "Mo" => 42,
@@ -51,7 +51,7 @@ const ZATOMS = Dict(
     "Sn" => 50,
     "Sb" => 51,
     "Te" => 52,
-    "I"  => 53,
+    "I" => 53,
     "Xe" => 54,
     "Cs" => 55,
     "Ba" => 56,
@@ -72,7 +72,7 @@ const ZATOMS = Dict(
     "Lu" => 71,
     "Hf" => 72,
     "Ta" => 73,
-    "W"  => 74,
+    "W" => 74,
     "Re" => 75,
     "Os" => 76,
     "Ir" => 77,
@@ -91,10 +91,10 @@ const ZATOMS = Dict(
 Returns an array of atomic numbers (with size `Nspecies`) given an instance
 of `Atoms`.
 """
-function get_Zatoms( atoms::Atoms )
+function get_Zatoms(atoms::Atoms)
     Nspecies = atoms.Nspecies
     SpeciesSymbols = atoms.SpeciesSymbols
-    Zatoms = zeros(Float64,Nspecies)
+    Zatoms = zeros(Float64, Nspecies)
     for isp = 1:Nspecies
         Zatoms[isp] = ZATOMS[SpeciesSymbols[isp]]
     end
@@ -115,7 +115,7 @@ Similar functionality can be obtained by using the built-in `unique` function.
 Nspecies = length(unique(str))
 ```
 """
-function get_Nspecies( atsymbs::Array{String,1} )
+function get_Nspecies(atsymbs::Array{String,1})
     # Determine number of species
     Nspecies = 0
     Natoms = size(atsymbs)[1]
@@ -144,9 +144,9 @@ Similar functionality can be obtained by using the built-in `unique` function.
 SpeciesSymbols = unique(str)
 ```
 """
-function get_SpeciesSymbols( Nspecies, atsymbs )
-    
-    SpeciesSymbols = Array{String}(undef,Nspecies)
+function get_SpeciesSymbols(Nspecies, atsymbs)
+
+    SpeciesSymbols = Array{String}(undef, Nspecies)
     Natoms = size(atsymbs)[1]
 
     idx1 = 0
@@ -158,7 +158,7 @@ function get_SpeciesSymbols( Nspecies, atsymbs )
             end
         end
         # Found different species
-        if k2==0
+        if k2 == 0
             idx1 = idx1 + 1
             SpeciesSymbols[idx1] = atsymbs[ia]
         end
@@ -171,12 +171,12 @@ end
 """
 Get `atm2species` which described mapping between `atsymbs` and `SpeciesSymbols`.
 """
-function get_atm2species( atsymbs, SpeciesSymbols )
+function get_atm2species(atsymbs, SpeciesSymbols)
 
     Natoms = size(atsymbs)[1]
     Nspecies = size(SpeciesSymbols)[1]
 
-    atm2species = Array{Int64}(undef,Natoms)
+    atm2species = Array{Int64}(undef, Natoms)
 
     for ia = 1:Natoms
         for isp = 1:Nspecies

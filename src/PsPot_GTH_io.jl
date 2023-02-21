@@ -1,6 +1,6 @@
 # Display information about GTH pseudopotential
 import Base: show
-function show( io::IO, psp::PsPot_GTH; header=true )
+function show(io::IO, psp::PsPot_GTH; header=true)
 
     ANGMOM = ["s", "p", "d", "f"]
 
@@ -32,14 +32,14 @@ function show( io::IO, psp::PsPot_GTH; header=true )
     else
         @printf(io, "No non-local pseudopotential.\n\n")
     end
-    for i=1:psp.lmax+1
+    for i = 1:psp.lmax+1
         @printf(io, "Angular momentum: %s, rc = %f\n", ANGMOM[i], rc[i])
         if Nproj_l[i] >= 1
             @printf(io, "h = \n")
         end
         for pi = 1:Nproj_l[i]
             for pj = 1:Nproj_l[i]
-                @printf(io, "%18.10f ", h[i,pi,pj])
+                @printf(io, "%18.10f ", h[i, pi, pj])
             end
             @printf(io, "\n")
         end
@@ -47,27 +47,27 @@ function show( io::IO, psp::PsPot_GTH; header=true )
     end
 
 end
-show( psp::PsPot_GTH; header=true ) = show( stdout, psp; header=header )
+show(psp::PsPot_GTH; header=true) = show(stdout, psp; header=header)
 
 
 """
 Write GTH/HGH pseudopotential in the format that can be read by ABINIT and PWSCF.
 """
-function write_psp10( psp::PsPot_GTH; prefix="", extension="psp10" )
+function write_psp10(psp::PsPot_GTH; prefix="", extension="psp10")
     atsymb = psp.atsymb
     zval = psp.zval
     zatom = PWDFT.ZATOMS[atsymb]
     lmax = psp.lmax
-    
+
     if extension == ".gth"
-        f = open( prefix*atsymb*".gth", "w" )
+        f = open(prefix * atsymb * ".gth", "w")
     else
-        f = open( prefix*atsymb*".psp10", "w" )
+        f = open(prefix * atsymb * ".psp10", "w")
     end
     @printf(f, "Hartwigsen-Goedecker-Hutter psp for %s, from PRB58, 3641 (1998)\n", atsymb)
     @printf(f, "%d %d 010605\n", Int(zatom), Int(zval))
     @printf(f, "10 1 %d 0 2001 0\n", lmax)
-    
+
     # local pseudopotential
     rlocal = psp.rlocal
     c = psp.c
@@ -83,12 +83,12 @@ function write_psp10( psp::PsPot_GTH; prefix="", extension="psp10" )
     Nproj_l = psp.Nproj_l
     rc = psp.rc
     h = psp.h
-    @printf(f, "%5d\n", lmax+1)
+    @printf(f, "%5d\n", lmax + 1)
     for l = 0:lmax
         @printf(f, "%18.10f %5d", rc[l+1], Nproj_l[l+1])
         for i = 1:Nproj_l[l+1]
             for j = i:Nproj_l[l+1]
-                @printf(f, "%18.10f ", h[l+1,i,j])
+                @printf(f, "%18.10f ", h[l+1, i, j])
             end
             @printf(f, "               \n")
         end

@@ -1,4 +1,4 @@
-function guess_rhoe( Ham::Hamiltonian )
+function guess_rhoe(Ham::Hamiltonian)
     atoms = Ham.atoms
     pw = Ham.pw
     pspots = Ham.pspots
@@ -10,12 +10,12 @@ function guess_rhoe( Ham::Hamiltonian )
 
     Natoms = atoms.Natoms
     Npoints = prod(pw.Ns)
-    Rhoe = zeros(Float64,Npoints)
-    RhoeG = zeros(ComplexF64,Npoints)
+    Rhoe = zeros(Float64, Npoints)
+    RhoeG = zeros(ComplexF64, Npoints)
 
-    decay_lengths = get_atmlength( atoms, pspots )
+    decay_lengths = get_atmlength(atoms, pspots)
 
-    strf = calc_strfact( atoms, pw )
+    strf = calc_strfact(atoms, pw)
 
     for ia = 1:Natoms
         isp = atm2species[ia]
@@ -23,33 +23,33 @@ function guess_rhoe( Ham::Hamiltonian )
         l = decay_lengths[isp]
         for ig = 1:Ng
             ip = idx_g2r[ig]
-            RhoeG[ip] = RhoeG[ip] + Zval*strf[ig,isp]*exp(-G2[ig]*l^2)
+            RhoeG[ip] = RhoeG[ip] + Zval * strf[ig, isp] * exp(-G2[ig] * l^2)
         end
     end
-    Rhoe = real( G_to_R(pw, RhoeG) )
+    Rhoe = real(G_to_R(pw, RhoeG))
 
     Nelectrons = Ham.electrons.Nelectrons
     CellVolume = pw.CellVolume
 
-    intRhoe = sum(Rhoe)*CellVolume/Npoints
-    Rhoe = Rhoe*Nelectrons/intRhoe
+    intRhoe = sum(Rhoe) * CellVolume / Npoints
+    Rhoe = Rhoe * Nelectrons / intRhoe
 
     return Rhoe
 end
 
-function get_atmlength( atoms::Atoms, pspots )
+function get_atmlength(atoms::Atoms, pspots)
     Nspecies = atoms.Nspecies
     Lengths = zeros(Nspecies)
     Zatoms = get_Zatoms(atoms)
     for isp = 1:Nspecies
         Zval = pspots[isp].zval
-        Lengths[isp] = atmlength( 0.0, Float64(Zval), Zatoms[isp] )
+        Lengths[isp] = atmlength(0.0, Float64(Zval), Zatoms[isp])
     end
     return Lengths
 end
 
 
-function guess_rhoe_atomic( Ham::Hamiltonian; starting_magnetization=nothing )
+function guess_rhoe_atomic(Ham::Hamiltonian; starting_magnetization=nothing)
 
     atoms = Ham.atoms
     pw = Ham.pw
@@ -61,27 +61,27 @@ function guess_rhoe_atomic( Ham::Hamiltonian; starting_magnetization=nothing )
     amesh = 0.0125
     rmax = 100.0
 
-    Zatoms = get_Zatoms( atoms )
+    Zatoms = get_Zatoms(atoms)
 
-    r = Array{Array{Float64,1},1}(undef,Nspecies)
-    rab = Array{Array{Float64,1},1}(undef,Nspecies)
-    rho_at = Array{Array{Float64,1},1}(undef,Nspecies)
+    r = Array{Array{Float64,1},1}(undef, Nspecies)
+    rab = Array{Array{Float64,1},1}(undef, Nspecies)
+    rho_at = Array{Array{Float64,1},1}(undef, Nspecies)
 
-    decay_lengths = PWDFT.get_atmlength( atoms, pspots )
+    decay_lengths = PWDFT.get_atmlength(atoms, pspots)
 
-    NptsRadial = zeros(Int64,Nspecies)
+    NptsRadial = zeros(Int64, Nspecies)
 
     eps8 = 1e-8
 
-    strf = calc_strfact( atoms, pw )
+    strf = calc_strfact(atoms, pw)
 
     for isp = 1:Nspecies
 
-        two_l2 = 2.0*decay_lengths[isp]^2
-        znorml = 4.0*pi*pspots[isp].zval/(pi*two_l2)^1.5
+        two_l2 = 2.0 * decay_lengths[isp]^2
+        znorml = 4.0 * pi * pspots[isp].zval / (pi * two_l2)^1.5
 
-        Npoints = round(Int64, 1.0 + (log(Zatoms[isp]*rmax)-xmin)/amesh)
-        Npoints = round(Int64, Npoints/2)*2 + 1
+        Npoints = round(Int64, 1.0 + (log(Zatoms[isp] * rmax) - xmin) / amesh)
+        Npoints = round(Int64, Npoints / 2) * 2 + 1
 
         NptsRadial[isp] = Npoints
 
@@ -90,17 +90,17 @@ function guess_rhoe_atomic( Ham::Hamiltonian; starting_magnetization=nothing )
         rho_at[isp] = zeros(Npoints)
 
         for ir = 1:Npoints
-            rr = exp(xmin + (ir-1)*amesh)/Zatoms[isp]
-            rab[isp][ir] = rr*amesh
+            rr = exp(xmin + (ir - 1) * amesh) / Zatoms[isp]
+            rab[isp][ir] = rr * amesh
             r[isp][ir] = rr
-            rho_at[isp][ir] = znorml*exp(-rr^2/two_l2)*rr^2
+            rho_at[isp][ir] = znorml * exp(-rr^2 / two_l2) * rr^2
         end
     end
 
     NpointsMax = maximum(NptsRadial)
 
     aux = zeros(NpointsMax)
-    
+
     Ngl = length(Ham.pw.gvec.G2_shells)
     rhocgnt = zeros(Ngl)
 
@@ -111,10 +111,10 @@ function guess_rhoe_atomic( Ham::Hamiltonian; starting_magnetization=nothing )
     idx_g2r = pw.gvec.idx_g2r
     CellVolume = pw.CellVolume
     Nspin = Ham.electrons.Nspin
-    rhocg = zeros(ComplexF64,Npoints,Nspin)
+    rhocg = zeros(ComplexF64, Npoints, Nspin)
 
-    if (Nspin == 2) && starting_magnetization==nothing
-        starting_magnetization = 0.1*ones(Nspecies)
+    if (Nspin == 2) && starting_magnetization == nothing
+        starting_magnetization = 0.1 * ones(Nspecies)
     end
 
     for isp = 1:Nspecies
@@ -122,47 +122,47 @@ function guess_rhoe_atomic( Ham::Hamiltonian; starting_magnetization=nothing )
         for ir = 1:NptsRadial[isp]
             aux[ir] = rho_at[isp][ir]
         end
-        rhocgnt[1] = integ_simpson( NptsRadial[isp], aux, rab[isp] )
+        rhocgnt[1] = integ_simpson(NptsRadial[isp], aux, rab[isp])
 
         for igl = 2:Ngl
             gx = sqrt(G2_shells[igl])
             for ir = 1:NptsRadial[isp]
                 if r[isp][ir] < eps8
-                   aux[ir] = rho_at[isp][ir]
+                    aux[ir] = rho_at[isp][ir]
                 else
-                   aux[ir] = rho_at[isp][ir]*sin(gx*r[isp][ir])/(r[isp][ir]*gx)
+                    aux[ir] = rho_at[isp][ir] * sin(gx * r[isp][ir]) / (r[isp][ir] * gx)
                 end
             end
-            rhocgnt[igl] = integ_simpson( NptsRadial[isp], aux, rab[isp] )
+            rhocgnt[igl] = integ_simpson(NptsRadial[isp], aux, rab[isp])
         end
 
         for ig = 1:Ng
             ip = idx_g2r[ig]
-            rhocg[ip,1] = rhocg[ip,1] + strf[ig,isp]*rhocgnt[idx_g2shells[ig]]/CellVolume
+            rhocg[ip, 1] = rhocg[ip, 1] + strf[ig, isp] * rhocgnt[idx_g2shells[ig]] / CellVolume
         end
 
         if Nspin == 2
             for ig = 1:Ng
                 ip = idx_g2r[ig]
-                rhocg[ip,2] = rhocg[ip,2] + starting_magnetization[isp]*strf[ig,isp]*rhocgnt[idx_g2shells[ig]]/CellVolume
+                rhocg[ip, 2] = rhocg[ip, 2] + starting_magnetization[isp] * strf[ig, isp] * rhocgnt[idx_g2shells[ig]] / CellVolume
             end
         end
     end
 
-    Rhoe = zeros(Npoints,Nspin)
-    Rhoe_tot = real(G_to_R(pw,rhocg[:,1]))*Npoints
-    
+    Rhoe = zeros(Npoints, Nspin)
+    Rhoe_tot = real(G_to_R(pw, rhocg[:, 1])) * Npoints
+
     # Rhoe_tot = Rhoe_up + Rhoe_dn
     # magn = Rhoe_up - Rhoe_dn
     # 2*Rhoe_up = Rhoe_tot + magn
     # 2*Rhoe_dn = Rhoe_tot - magn
 
     if Nspin == 2
-        magn = real(G_to_R(pw,rhocg[:,2]))*Npoints
-        Rhoe[:,1] = 0.5*(Rhoe_tot + magn)
-        Rhoe[:,2] = 0.5*(Rhoe_tot - magn)
+        magn = real(G_to_R(pw, rhocg[:, 2])) * Npoints
+        Rhoe[:, 1] = 0.5 * (Rhoe_tot + magn)
+        Rhoe[:, 2] = 0.5 * (Rhoe_tot - magn)
     else
-        Rhoe[:,1] = Rhoe_tot
+        Rhoe[:, 1] = Rhoe_tot
     end
 
     return Rhoe
@@ -205,20 +205,20 @@ end
 modified by Fadjar Fathurrahman
 =#
 
-function atmlength( densty::Float64, zion::Float64, znucl::Float64 )
-  
-    tol10  = 1.e-8
+function atmlength(densty::Float64, zion::Float64, znucl::Float64)
+
+    tol10 = 1.e-8
 
     data_Length = zeros(16)
 
     # Either use the input value, or the default value, tabulated now.
-    if abs(densty) > tol10 
+    if abs(densty) > tol10
         return densty
     end
 
     # Count the number of core electrons.
     coreel = znucl - zion
-    
+
     # Round the number of valence electrons
     nval = round(Int64, zion) #nint(zion)
 
@@ -228,16 +228,16 @@ function atmlength( densty::Float64, zion::Float64, znucl::Float64 )
     # they start from nval=1, and proceed by group of 5, until a default is used    
     if nval == 0
         Length = 0.0
-    
-    # Bare ions : adjusted on 1H and 2He only
+
+        # Bare ions : adjusted on 1H and 2He only
     elseif coreel < 0.5
         data_Length[1:4] = [0.6, 0.4, 0.3, 0.25]
         Length = 0.2
         if nval <= 4
             Length = data_Length[nval]
         end
-    
-    # 1s2 core : adjusted on 3Li, 6C, 7N, and 8O
+
+        # 1s2 core : adjusted on 3Li, 6C, 7N, and 8O
     elseif coreel < 2.5
         data_Length[1:8] = [1.8, 1.4, 1.0, 0.7, 0.6, 0.5, 0.4, 0.35]
         Length = 0.3
@@ -245,59 +245,59 @@ function atmlength( densty::Float64, zion::Float64, znucl::Float64 )
             Length = data_Length[nval]
         end
 
-    # Ne core (1s2 2s2 2p6) : adjusted on 11na, 13al, 14si and 17cl
+        # Ne core (1s2 2s2 2p6) : adjusted on 11na, 13al, 14si and 17cl
     elseif coreel < 10.5
         data_Length[1:10] = [2.0, 1.6, 1.25, 1.1, 1.0,
-                             0.9, 0.8, 0.7 , 0.7, 0.7]
+            0.9, 0.8, 0.7, 0.7, 0.7]
         Length = 0.6
         if nval <= 10
             Length = data_Length[nval]
         end
 
-    # Mg core (1s2 2s2 2p6 3s2) : adjusted on 19k, and on coreel==10
+        # Mg core (1s2 2s2 2p6 3s2) : adjusted on 19k, and on coreel==10
     elseif coreel < 12.5
         data_Length[1:10] = [1.9, 1.5, 1.15, 1.0, 0.9,
-                             0.8, 0.7, 0.6 , 0.6, 0.6]
+            0.8, 0.7, 0.6, 0.6, 0.6]
         Length = 0.5
         if nval <= 10
             Length = data_Length[nval]
         end
 
-    # Ar core (Ne + 3s2 3p6) : adjusted on 20ca, 25mn and 30zn
+        # Ar core (Ne + 3s2 3p6) : adjusted on 20ca, 25mn and 30zn
     elseif coreel < 18.5
-        data_Length[1:12] = [2.0,  1.8,  1.5, 1.2,  1.0,
-                             0.9,  0.85, 0.8, 0.75, 0.7,
-                             0.65, 0.65]
+        data_Length[1:12] = [2.0, 1.8, 1.5, 1.2, 1.0,
+            0.9, 0.85, 0.8, 0.75, 0.7,
+            0.65, 0.65]
         Length = 0.6
         if nval <= 12
             Length = data_Length[nval]
         end
 
-    # Full 3rd shell core (Ar + 3d10) : adjusted on 31ga, 34se and 38sr
+        # Full 3rd shell core (Ar + 3d10) : adjusted on 31ga, 34se and 38sr
     elseif coreel < 28.5
-        data_Length[1:14] = [1.5 , 1.25, 1.15, 1.05, 1.00,
-                             0.95, 0.95, 0.9 , 0.9 , 0.85,
-                             0.85, 0.80, 0.8 , 0.75]
+        data_Length[1:14] = [1.5, 1.25, 1.15, 1.05, 1.00,
+            0.95, 0.95, 0.9, 0.9, 0.85,
+            0.85, 0.80, 0.8, 0.75]
         Length = 0.7
         if nval <= 14
             Length = data_Length[nval]
         end
 
-    # Krypton core (Ar + 3d10 4s2 4p6) : adjusted on 39y, 42mo and 48cd
+        # Krypton core (Ar + 3d10 4s2 4p6) : adjusted on 39y, 42mo and 48cd
     elseif coreel < 36.5
-        data_Length[1:12] = [2.0 , 2.00, 1.60, 1.40, 1.25,
-                             1.10, 1.00, 0.95, 0.90, 0.85,
-                             0.80, 0.75]
+        data_Length[1:12] = [2.0, 2.00, 1.60, 1.40, 1.25,
+            1.10, 1.00, 0.95, 0.90, 0.85,
+            0.80, 0.75]
         Length = 0.7
         if nval <= 12
             Length = data_Length[nval]
         end
 
-    # For the remaining elements, consider a function of nval only
+        # For the remaining elements, consider a function of nval only
     else
-        data_Length[1:12] = [2.0 , 2.00, 1.55, 1.25, 1.15,
-                             1.10, 1.05, 1.0 , 0.95, 0.9,
-                             0.85, 0.85]
+        data_Length[1:12] = [2.0, 2.00, 1.55, 1.25, 1.15,
+            1.10, 1.05, 1.0, 0.95, 0.9,
+            0.85, 0.85]
         Length = 0.8
         if nval <= 12
             Length = data_Length[nval]

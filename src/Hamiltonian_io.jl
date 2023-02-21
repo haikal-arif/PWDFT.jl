@@ -1,5 +1,5 @@
 import Base: show
-function show( io::IO, Ham::Hamiltonian; header=true )
+function show(io::IO, Ham::Hamiltonian; header=true)
     if header
         @printf("\n")
         @printf("                                  -----------\n")
@@ -7,7 +7,7 @@ function show( io::IO, Ham::Hamiltonian; header=true )
         @printf("                                  -----------\n")
         @printf("\n")
     end
-    @printf(io, "size (MiB) = %18.5f\n", Base.summarysize(Ham)/1024/1024)
+    @printf(io, "size (MiB) = %18.5f\n", Base.summarysize(Ham) / 1024 / 1024)
     println(io, "")
     println(io, "xcfunc       = ", Ham.xcfunc)
     println(io, "xc_calc.x_id = ", Ham.xc_calc.x_id)
@@ -21,4 +21,4 @@ function show( io::IO, Ham::Hamiltonian; header=true )
         show(io, Ham.pspots[isp])
     end
 end
-show( Ham::Hamiltonian; header=true ) = show( stdout, Ham, header=header )
+show(Ham::Hamiltonian; header=true) = show(stdout, Ham, header=header)

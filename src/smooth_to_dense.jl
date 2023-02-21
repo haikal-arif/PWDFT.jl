@@ -26,14 +26,14 @@ function smooth_to_dense!(
     # For dense grid additional coefs are set to zero
     for ig in 1:Ngs
         ip_out = pw.gvec.idx_g2r[ig] # dense
-        ip_in  = pw.gvecs.idx_g2r[ig] # smooth
+        ip_in = pw.gvecs.idx_g2r[ig] # smooth
         aux_out[ip_out] = aux_in[ip_in]
     end
-    
+
     G_to_R!(pw, aux_out) # using dense grid
 
     # FIXME: Manual normalization
-    aux_out *= (NptsDense/NptsSmooth)  # XXX This is important!
+    aux_out *= (NptsDense / NptsSmooth)  # XXX This is important!
 
     v_out[1:NptsDense] = real(aux_out[1:NptsDense])
 

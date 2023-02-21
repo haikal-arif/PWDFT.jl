@@ -31,18 +31,18 @@ function calc_rhoe_core!(
         for ig in 1:Ng
             ip = idx_g2r[ig]
             igl = idx_g2shells[ig]
-            rhoecG[ip] = strf[ig,isp] * rhoecgl[igl]
+            rhoecG[ip] = strf[ig, isp] * rhoecgl[igl]
         end
         #
         #rhoe_core[:] = rhoe_core[:] + real(G_to_R(pw, rhoecG)) * Npoints / CellVolume
         G_to_R!(pw, rhoecG)
         for ip in 1:Npoints
-            rhoe_core[ip,1] += real(rhoecG[ip])*Npoints/CellVolume
+            rhoe_core[ip, 1] += real(rhoecG[ip]) * Npoints / CellVolume
         end
         # Check for negative rhoe
         for ip in 1:Npoints
-            if rhoe_core[ip,1] < 0.0
-                neg_rhoec = neg_rhoec + rhoe_core[ip,1]
+            if rhoe_core[ip, 1] < 0.0
+                neg_rhoec = neg_rhoec + rhoe_core[ip, 1]
             end
         end
     end
@@ -66,14 +66,14 @@ function _calc_rhoecgl!(
     Ngl = length(G2_shells)
     aux = zeros(Float64, Nr)
 
-    pref = 4*pi
+    pref = 4 * pi
 
     # G=0 term
     if G2_shells[1] < 1e-8
         for ir in 1:Nr
             aux[ir] = r[ir]^2 * rho_atc[ir]
         end
-        rhoecgl[1] = pref*integ_simpson(Nr, aux, rab)
+        rhoecgl[1] = pref * integ_simpson(Nr, aux, rab)
     end
 
     # G != 0 term
@@ -82,9 +82,9 @@ function _calc_rhoecgl!(
         for ir in 1:Nr
             #aux[ir] = r[ir]^2 * rho_atc[ir] * sphericalbesselj(0, Gx*r[ir])
             # or
-            aux[ir] = r[ir] * rho_atc[ir] * sin(Gx*r[ir])/Gx
+            aux[ir] = r[ir] * rho_atc[ir] * sin(Gx * r[ir]) / Gx
         end
-        rhoecgl[igl] = pref*integ_simpson(Nr, aux, rab)
+        rhoecgl[igl] = pref * integ_simpson(Nr, aux, rab)
     end
     return
 end

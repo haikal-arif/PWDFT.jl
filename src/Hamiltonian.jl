@@ -51,10 +51,10 @@ function Hamiltonian(
     # Keyword arguments
     dual::Float64=4.0,
     Nspin::Int64=1,
-    meshk::Vector{Int64}=[1,1,1],  # FIXME: convert to tuple?
-    shiftk::Vector{Int64}=[0,0,0],
+    meshk::Vector{Int64}=[1, 1, 1],  # FIXME: convert to tuple?
+    shiftk::Vector{Int64}=[0, 0, 0],
     time_reversal::Bool=true,
-    Ns_::Tuple{Int64,Int64,Int64}=(0,0,0),
+    Ns_::Tuple{Int64,Int64,Int64}=(0, 0, 0),
     kpoints::Union{KPoints,Nothing}=nothing,
     kpts_str::String="",
     xcfunc::String="VWN",
@@ -76,21 +76,21 @@ function Hamiltonian(
     if kpoints == nothing
         if kpts_str == ""
             # automatic generation of kpoints
-            kpoints = KPoints( atoms, meshk, shiftk, sym_info.s, time_reversal=time_reversal )
+            kpoints = KPoints(atoms, meshk, shiftk, sym_info.s, time_reversal=time_reversal)
         else
             # use the given kpoints
-            kpoints = kpoints_from_string( atoms, kpts_str )
+            kpoints = kpoints_from_string(atoms, kpts_str)
         end
     else
         @assert typeof(kpoints) == KPoints
     end
 
     # Initialize plane wave grids
-    pw = PWGrid( ecutwfc, atoms.LatVecs, kpoints=kpoints, Ns_=Ns_, dual=dual )
+    pw = PWGrid(ecutwfc, atoms.LatVecs, kpoints=kpoints, Ns_=Ns_, dual=dual)
 
     Nspecies = atoms.Nspecies
     if Nspecies != size(pspfiles)[1]
-        error( @sprintf("Length of pspfiles is not equal to %d\n", Nspecies) )
+        error(@sprintf("Length of pspfiles is not equal to %d\n", Nspecies))
     end
 
     Npoints = prod(pw.Ns)
@@ -99,7 +99,7 @@ function Hamiltonian(
     Ng = pw.gvec.Ng
     idx_g2r = pw.gvec.idx_g2r
 
-    strf = calc_strfact( atoms, pw )
+    strf = calc_strfact(atoms, pw)
 
     #
     # Initialize pseudopotentials and local potentials
@@ -113,27 +113,27 @@ function Hamiltonian(
 
     # XXX We don't support mixed pseudopotentials set
     if is_using_extension_upf(pspfiles[1])
-        pspots = Vector{PsPot_UPF}(undef,Nspecies)
+        pspots = Vector{PsPot_UPF}(undef, Nspecies)
     else
-        pspots = Vector{PsPot_GTH}(undef,Nspecies)
-    end    
+        pspots = Vector{PsPot_GTH}(undef, Nspecies)
+    end
 
     #
     # Initialize pseudopotentials and local ionic potentials
     #
-    is_psp_using_nlcc = zeros(Bool,Nspecies) # by default we don't use any NLCC
+    is_psp_using_nlcc = zeros(Bool, Nspecies) # by default we don't use any NLCC
     V_of_0 = 0.0
     #
     for isp in 1:Nspecies
         #
-        if is_using_extension_upf(pspfiles[isp])            
+        if is_using_extension_upf(pspfiles[isp])
             #
             # Using UPF
             #
             println("\nUsing UPF\n")
-            pspots[isp] = PsPot_UPF( pspfiles[isp] )
+            pspots[isp] = PsPot_UPF(pspfiles[isp])
             # build the interpolation table needed for nonlocal projectors
-            _build_prj_interp_table!( pspots[isp], pw )
+            _build_prj_interp_table!(pspots[isp], pw)
             #
             if pspots[isp].is_nlcc
                 is_psp_using_nlcc[isp] = true
@@ -147,17 +147,17 @@ function Hamiltonian(
             #
             # Using GTH pseudopotential
             #
-            pspots[isp] = PsPot_GTH( pspfiles[isp] )
+            pspots[isp] = PsPot_GTH(pspfiles[isp])
         end
         #
         psp = pspots[isp] # shortcut
         #
-        eval_Vloc_G!( psp, G2_shells, Vgl )
+        eval_Vloc_G!(psp, G2_shells, Vgl)
         #
         for ig in 1:Ng
             ip = idx_g2r[ig]
             igl = idx_g2shells[ig]
-            Vg[ip] += strf[ig,isp] * Vgl[igl] / CellVolume
+            Vg[ip] += strf[ig, isp] * Vgl[igl] / CellVolume
         end
     end
     V_of_0 += real(Vg[1]) # using PWSCF convention
@@ -165,9 +165,9 @@ function Hamiltonian(
     V_Ps_loc *= Npoints # Rescale using PWSCF convetion
 
     # other potential terms are set to zero
-    V_Hartree = zeros( Float64, Npoints )
-    V_xc = zeros( Float64, Npoints, Nspin )
-    V_loc_tot = zeros( Float64, Npoints, Nspin )
+    V_Hartree = zeros(Float64, Npoints)
+    V_xc = zeros(Float64, Npoints, Nspin)
+    V_loc_tot = zeros(Float64, Npoints, Nspin)
     if pw.using_dual_grid
         # We initialize smooth local potential here (total)
         potentials = Potentials(
@@ -187,7 +187,7 @@ function Hamiltonian(
     #
     energies = Energies()
     #
-    rhoe = zeros( Float64, Npoints, Nspin )
+    rhoe = zeros(Float64, Npoints, Nspin)
     #
     # Initialize core electron density for NLCC if needed
     #
@@ -200,15 +200,15 @@ function Hamiltonian(
 
 
     if extra_states > -1
-        electrons = Electrons( atoms, pspots, Nspin=Nspin, Nkpt=kpoints.Nkpt,
-            Nstates_empty=extra_states )
+        electrons = Electrons(atoms, pspots, Nspin=Nspin, Nkpt=kpoints.Nkpt,
+            Nstates_empty=extra_states)
     elseif Nstates > -1
-        electrons = Electrons( atoms, pspots, Nspin=Nspin, Nkpt=kpoints.Nkpt,
-            Nstates=Nstates )
+        electrons = Electrons(atoms, pspots, Nspin=Nspin, Nkpt=kpoints.Nkpt,
+            Nstates=Nstates)
     elseif (Nstates == -1) && (extra_states == -1)
         # Default value for Nstates and Nstates_empty
         # Nstates will be calculated automatically
-        electrons = Electrons( atoms, pspots, Nspin=Nspin, Nkpt=kpoints.Nkpt )
+        electrons = Electrons(atoms, pspots, Nspin=Nspin, Nkpt=kpoints.Nkpt)
     else
         error("Error in initializing instance of Electrons")
     end
@@ -222,7 +222,7 @@ function Hamiltonian(
     if all(are_using_upf)
         pspotNL = PsPotNL_UPF(atoms, pw, pspots)
     elseif all(.!are_using_upf)
-        pspotNL = PsPotNL( atoms, pw, pspots, check_norm=false )
+        pspotNL = PsPotNL(atoms, pw, pspots, check_norm=false)
     else
         error("Not supporting mixed pseudopotential types: GTH and UPF")
     end
@@ -231,13 +231,13 @@ function Hamiltonian(
     # Ideally we should have one PsPotNL type only.
 
 
-    atoms.Zvals = get_Zvals( pspots )
+    atoms.Zvals = get_Zvals(pspots)
 
     ik = 1
     ispin = 1
 
     if sym_info.Nsyms > 1
-        rhoe_symmetrizer = RhoeSymmetrizer( atoms, pw, sym_info )
+        rhoe_symmetrizer = RhoeSymmetrizer(atoms, pw, sym_info)
     else
         rhoe_symmetrizer = RhoeSymmetrizer() # dummy rhoe_symmetrizer
     end
@@ -253,9 +253,9 @@ function Hamiltonian(
         end
     end
 
-    return Hamiltonian( pw, potentials, energies, rhoe, rhoe_core,
-                        electrons, atoms, sym_info, rhoe_symmetrizer,
-                        pspots, pspotNL, xcfunc, xc_calc, ik, ispin )
+    return Hamiltonian(pw, potentials, energies, rhoe, rhoe_core,
+        electrons, atoms, sym_info, rhoe_symmetrizer,
+        pspots, pspotNL, xcfunc, xc_calc, ik, ispin)
 end
 
 
@@ -329,7 +329,7 @@ function Hamiltonian( atoms::Atoms, ecutwfc::Float64;
 
     Zatoms = get_Zatoms( atoms )
     atoms.Zvals = Zatoms
-    
+
     # use Zatoms as Zvals
     electrons = Electrons( atoms, Zatoms, Nspin=Nspin, Nkpt=kpoints.Nkpt,
                            Nstates_empty=extra_states )
@@ -337,7 +337,7 @@ function Hamiltonian( atoms::Atoms, ecutwfc::Float64;
     rhoe = zeros(Float64,Npoints,Nspin)
 
     pspotNL = PsPotNL()
-    
+
     ik = 1
     ispin = 1
 
@@ -363,11 +363,11 @@ end
 
 # FIXME: should be merged with Array{Float64,2} version.
 # psiks is needed for metagga
-function update!( Ham::Hamiltonian, psiks::BlochWavefunc, rhoe::Array{Float64,1} )
+function update!(Ham::Hamiltonian, psiks::BlochWavefunc, rhoe::Array{Float64,1})
 
     # assumption Nspin = 1
-    Ham.rhoe[:,1] = rhoe
-    
+    Ham.rhoe[:, 1] = rhoe
+
     pw = Ham.pw
     xc_calc = Ham.xc_calc
     V_Hartree = Ham.potentials.Hartree
@@ -378,25 +378,25 @@ function update!( Ham::Hamiltonian, psiks::BlochWavefunc, rhoe::Array{Float64,1}
     Poisson_solve!(pw, rhoe, V_Hartree)
 
     if Ham.xcfunc == "SCAN"
-        Vxc_tmp = zeros(size(rhoe,1)) # FIXME: use V_XC directly
-        calc_Vxc_SCAN!( Ham, psiks, rhoe, Vxc_tmp )
-        V_XC[:,1] = Vxc_tmp[:]
-    #
+        Vxc_tmp = zeros(size(rhoe, 1)) # FIXME: use V_XC directly
+        calc_Vxc_SCAN!(Ham, psiks, rhoe, Vxc_tmp)
+        V_XC[:, 1] = Vxc_tmp[:]
+        #
     elseif Ham.xcfunc == "PBE"
-        V_XC[:,1] = calc_Vxc_PBE( xc_calc, pw, rhoe )
-    #
+        V_XC[:, 1] = calc_Vxc_PBE(xc_calc, pw, rhoe)
+        #
     else
         # VWN is the default
         if Ham.rhoe_core == nothing
-            @views V_XC[:,1] = calc_Vxc_VWN( xc_calc, rhoe )
+            @views V_XC[:, 1] = calc_Vxc_VWN(xc_calc, rhoe)
         else
-            @views V_XC[:,1] = calc_Vxc_VWN( xc_calc, rhoe + Ham.rhoe_core )
+            @views V_XC[:, 1] = calc_Vxc_VWN(xc_calc, rhoe + Ham.rhoe_core)
         end
     end
-    
-    Npoints = size(rhoe,1)
+
+    Npoints = size(rhoe, 1)
     for ip in 1:Npoints
-        V_Total[ip,1] = V_Ps_loc[ip] + V_Hartree[ip] + V_XC[ip,1]  
+        V_Total[ip, 1] = V_Ps_loc[ip] + V_Hartree[ip] + V_XC[ip, 1]
     end
     return
 end
@@ -417,54 +417,54 @@ Update Ham.rhoe and calculate Hartree and XC potentials for given `rhoe` in real
 function update!(Ham::Hamiltonian, psiks::BlochWavefunc, rhoe::Array{Float64,2})
     Nspin = size(rhoe)[2]
     if Nspin == 1
-        update!(Ham, psiks, rhoe[:,1])
+        update!(Ham, psiks, rhoe[:, 1])
         return
     end
     # FIXME: spinpol MetaGGA is not yet implemented
-    Ham.rhoe = rhoe[:,:]
-    Rhoe_total = Ham.rhoe[:,1] + Ham.rhoe[:,2] # Nspin is 2
-    Ham.potentials.Hartree = real( G_to_R( Ham.pw, Poisson_solve(Ham.pw, Rhoe_total) ) )
+    Ham.rhoe = rhoe[:, :]
+    Rhoe_total = Ham.rhoe[:, 1] + Ham.rhoe[:, 2] # Nspin is 2
+    Ham.potentials.Hartree = real(G_to_R(Ham.pw, Poisson_solve(Ham.pw, Rhoe_total)))
     if Ham.xcfunc == "PBE"
-        Ham.potentials.XC = calc_Vxc_PBE( Ham.xc_calc, Ham.pw, rhoe )
+        Ham.potentials.XC = calc_Vxc_PBE(Ham.xc_calc, Ham.pw, rhoe)
         # FIXME: NLCC is not yet handled
-    else 
+    else
         # VWN is the default
         if Ham.rhoe_core == nothing
-            Ham.potentials.XC = calc_Vxc_VWN( Ham.xc_calc, rhoe )
+            Ham.potentials.XC = calc_Vxc_VWN(Ham.xc_calc, rhoe)
         else
-            Ham.potentials.XC = calc_Vxc_VWN( Ham.xc_calc, rhoe + Ham.rhoe_core )
+            Ham.potentials.XC = calc_Vxc_VWN(Ham.xc_calc, rhoe + Ham.rhoe_core)
         end
     end
     Npoints = prod(Ham.pw.Ns)
     for ispin = 1:Nspin
         for ip = 1:Npoints
-            Ham.potentials.Total[ip,ispin] = Ham.potentials.Ps_loc[ip] + Ham.potentials.Hartree[ip] +
-                                             Ham.potentials.XC[ip,ispin]  
+            Ham.potentials.Total[ip, ispin] = Ham.potentials.Ps_loc[ip] + Ham.potentials.Hartree[ip] +
+                                              Ham.potentials.XC[ip, ispin]
         end
     end
     return
 end
 
 # For compatibility
-function update!( Ham::Hamiltonian, rhoe::Array{Float64,1} )
+function update!(Ham::Hamiltonian, rhoe::Array{Float64,1})
     # assumption Nspin = 1
-    Ham.rhoe[:,1] = rhoe
-    Vxc = zeros(size(rhoe,1))
-    Ham.potentials.Hartree = real( G_to_R( Ham.pw, Poisson_solve(Ham.pw, rhoe) ) )    
+    Ham.rhoe[:, 1] = rhoe
+    Vxc = zeros(size(rhoe, 1))
+    Ham.potentials.Hartree = real(G_to_R(Ham.pw, Poisson_solve(Ham.pw, rhoe)))
     if Ham.xcfunc == "PBE"
-        Ham.potentials.XC[:,1] = calc_Vxc_PBE( Ham.xc_calc, Ham.pw, rhoe )
+        Ham.potentials.XC[:, 1] = calc_Vxc_PBE(Ham.xc_calc, Ham.pw, rhoe)
     else
         # VWN is the default
         if Ham.rhoe_core == nothing
-            Ham.potentials.XC[:,1] = calc_Vxc_VWN( Ham.xc_calc, rhoe )
+            Ham.potentials.XC[:, 1] = calc_Vxc_VWN(Ham.xc_calc, rhoe)
         else
-            Ham.potentials.XC[:,1] = calc_Vxc_VWN( Ham.xc_calc, rhoe + Ham.rhoe_core )
+            Ham.potentials.XC[:, 1] = calc_Vxc_VWN(Ham.xc_calc, rhoe + Ham.rhoe_core)
         end
     end
     Npoints = prod(Ham.pw.Ns)
     for ip = 1:Npoints
-        Ham.potentials.Total[ip,1] = Ham.potentials.Ps_loc[ip] + Ham.potentials.Hartree[ip] +
-                                     Ham.potentials.XC[ip,1]  
+        Ham.potentials.Total[ip, 1] = Ham.potentials.Ps_loc[ip] + Ham.potentials.Hartree[ip] +
+                                      Ham.potentials.XC[ip, 1]
     end
     return
 end
@@ -472,22 +472,22 @@ end
 function update!(Ham::Hamiltonian, rhoe::Array{Float64,2})
     Nspin = size(rhoe)[2]
     if Nspin == 1
-        update!(Ham, rhoe[:,1])
+        update!(Ham, rhoe[:, 1])
         return
     end
-    Ham.rhoe = rhoe[:,:]
-    Rhoe_total = Ham.rhoe[:,1] + Ham.rhoe[:,2] # Nspin is 2
-    Ham.potentials.Hartree = real( G_to_R( Ham.pw, Poisson_solve(Ham.pw, Rhoe_total) ) )
+    Ham.rhoe = rhoe[:, :]
+    Rhoe_total = Ham.rhoe[:, 1] + Ham.rhoe[:, 2] # Nspin is 2
+    Ham.potentials.Hartree = real(G_to_R(Ham.pw, Poisson_solve(Ham.pw, Rhoe_total)))
     if Ham.xcfunc == "PBE"
-        Ham.potentials.XC = calc_Vxc_PBE( Ham.xc_calc, Ham.pw, rhoe )
+        Ham.potentials.XC = calc_Vxc_PBE(Ham.xc_calc, Ham.pw, rhoe)
     else  # VWN is the default
-        Ham.potentials.XC = calc_Vxc_VWN( Ham.xc_calc, rhoe )
+        Ham.potentials.XC = calc_Vxc_VWN(Ham.xc_calc, rhoe)
     end
     Npoints = prod(Ham.pw.Ns)
     for ispin = 1:Nspin
         for ip = 1:Npoints
-            Ham.potentials.Total[ip,ispin] = Ham.potentials.Ps_loc[ip] + Ham.potentials.Hartree[ip] +
-                                             Ham.potentials.XC[ip,ispin]  
+            Ham.potentials.Total[ip, ispin] = Ham.potentials.Ps_loc[ip] + Ham.potentials.Hartree[ip] +
+                                              Ham.potentials.XC[ip, ispin]
         end
     end
     return

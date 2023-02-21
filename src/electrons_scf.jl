@@ -18,7 +18,7 @@ function electrons_scf!(
     etot_conv_thr=1e-6,
     ethr_evals_last=1e-13,
     use_smearing=false,
-    kT::Float64=1e-3,
+    kT::Float64=1e-3
 )
 
     # Prepare for SCF
@@ -34,11 +34,11 @@ function electrons_scf!(
 
     Npoints = prod(Ham.pw.Ns)
     CellVolume = Ham.pw.CellVolume
-    dVol = CellVolume/Npoints
+    dVol = CellVolume / Npoints
     Nstates = Ham.electrons.Nstates
 
     Rhoe = Ham.rhoe
-    println("Initial integ Rhoe = ", sum(Rhoe)*dVol)
+    println("Initial integ Rhoe = ", sum(Rhoe) * dVol)
 
     diffRhoe = 0.0
 
@@ -57,11 +57,11 @@ function electrons_scf!(
     Nelectrons = Ham.electrons.Nelectrons
 
     evals = Ham.electrons.ebands
-        
+
     # Mix directly in R-space
     mixer = BroydenMixer(Rhoe, betamix, mixdim=8)
 
-    Rhoe_in = zeros(Float64,size(Rhoe))
+    Rhoe_in = zeros(Float64, size(Rhoe))
 
     ethr = 1e-5 # default
 
@@ -75,12 +75,12 @@ function electrons_scf!(
     mTS = 0.0
 
     for iterSCF in 1:NiterMax
-        
-        @views Vin[:] .= Vhartree[:] + Vxc[:,1]
-        deband_hwf = -sum(Vin .* Rhoe[:,1])*dVol
+
+        @views Vin[:] .= Vhartree[:] + Vxc[:, 1]
+        deband_hwf = -sum(Vin .* Rhoe[:, 1]) * dVol
 
         # Copy input rhoe
-        @views Rhoe_in[:,:] .= Rhoe[:,:]
+        @views Rhoe_in[:, :] .= Rhoe[:, :]
 
         #
         # Diagonalization step
@@ -89,11 +89,11 @@ function electrons_scf!(
         #
         #println("\niterSCF = ", iterSCF)
         #println("Davidson diagonalization with ethr = ", ethr)
-        evals[:,:] .= diag_davidson_qe!( Ham, psiks, tol=ethr )
+        evals[:, :] .= diag_davidson_qe!(Ham, psiks, tol=ethr)
 
         if use_smearing
-            Focc[:,:], E_fermi = calc_Focc( Nelectrons, wk, kT, evals, Nspin )
-            mTS = calc_entropy( wk, kT, evals, E_fermi, Nspin )
+            Focc[:, :], E_fermi = calc_Focc(Nelectrons, wk, kT, evals, Nspin)
+            mTS = calc_entropy(wk, kT, evals, E_fermi, Nspin)
             Ham.electrons.Focc = copy(Focc)
         end
 
@@ -101,7 +101,7 @@ function electrons_scf!(
         # Calculate electron density and band energy
         #
         Eband = _calc_Eband(wk, Focc, evals)
-        Rhoe[:,:] = calc_rhoe_uspp( Ham, psiks )
+        Rhoe[:, :] = calc_rhoe_uspp(Ham, psiks)
         #println("integ output Rhoe = ", sum(Rhoe)*dVol)
 
         # This is not used later?
@@ -109,8 +109,8 @@ function electrons_scf!(
         # entropy term missing
 
         # Calculate deband (using new Rhoe)
-        @views Vin[:] .= Vhartree[:] + Vxc[:,1]
-        deband = -sum(Vin .* Rhoe[:,1])*dVol
+        @views Vin[:] .= Vhartree[:] + Vxc[:, 1]
+        deband = -sum(Vin .* Rhoe[:, 1]) * dVol
 
         #
         # Mix the density
@@ -126,10 +126,10 @@ function electrons_scf!(
         #
         Ehartree, Exc, Evtxc = update_from_rhoe!(Ham, Rhoe)
 
-        descf = -sum( (Rhoe_in[:,1] .- Rhoe[:,1]).*(Vhartree + Vxc[:,1]) )*dVol
+        descf = -sum((Rhoe_in[:, 1] .- Rhoe[:, 1]) .* (Vhartree + Vxc[:, 1])) * dVol
 
         Etot = Eband + deband + Ehartree + Exc + Ham.energies.NN + descf + mTS
-    
+
         #
         diffEtot = abs(Etot - Etot_old)
         @printf("SCF: %5d %18.10f %10.5e %10.5e\n", iterSCF, Etot, diffEtot, diffRhoe)
@@ -154,17 +154,17 @@ function electrons_scf!(
     println("-----------------------")
     println("Energy components in Ry")
     println("-----------------------")
-    @printf("Eband    = %18.10f\n", Eband*2)
-    @printf("deband   = %18.10f\n", deband*2)
-    @printf("descf    = %18.10f\n", descf*2)
+    @printf("Eband    = %18.10f\n", Eband * 2)
+    @printf("deband   = %18.10f\n", deband * 2)
+    @printf("descf    = %18.10f\n", descf * 2)
     @printf("-----------------------------\n")
-    @printf("OneEle   = %18.10f\n", 2*(Eband + deband))
-    @printf("Ehartree = %18.10f\n", 2*Ehartree)
-    @printf("Exc      = %18.10f\n", 2*Exc)
-    @printf("NN       = %18.10f\n", 2*Ham.energies.NN)
-    @printf("mTS      = %18.10f\n", 2*mTS)
+    @printf("OneEle   = %18.10f\n", 2 * (Eband + deband))
+    @printf("Ehartree = %18.10f\n", 2 * Ehartree)
+    @printf("Exc      = %18.10f\n", 2 * Exc)
+    @printf("NN       = %18.10f\n", 2 * Ham.energies.NN)
+    @printf("mTS      = %18.10f\n", 2 * mTS)
     @printf("-----------------------------\n")
-    @printf("! Total  = %18.10f\n", 2*Etot)
+    @printf("! Total  = %18.10f\n", 2 * Etot)
 
     # TODO
     # Also print the Kohn-Sham orbital energies using similar format
@@ -192,7 +192,7 @@ function _prepare_scf!(Ham, psiks)
     # Initial density
     Rhoe, RhoeG = atomic_rho_g(Ham)
     # Update the potentials
-    Ehartree, Exc, Evtxc = update_from_rhoe!( Ham, Rhoe, RhoeG )
+    Ehartree, Exc, Evtxc = update_from_rhoe!(Ham, Rhoe, RhoeG)
     #
     # Reorthonormalize with S
     # FIXME: need to be included in rand_Blochwavefunc)
@@ -203,7 +203,7 @@ function _prepare_scf!(Ham, psiks)
     for ispin in 1:Nspin, ik in 1:Nkpt
         Ham.ispin = ispin
         Ham.ik = ik
-        ikspin = ik + (ispin - 1)*Nkpt
+        ikspin = ik + (ispin - 1) * Nkpt
         ortho_sqrt_with_S!(Ham, psiks[ikspin])
     end
     return Ehartree, Exc, Evtxc
@@ -214,12 +214,12 @@ function _calc_Eband(wk, Focc, evals)
     Nstates = size(evals, 1)
     Nkspin = size(evals, 2)
     Nkpt = size(wk, 1)
-    Nspin = Int64(Nkspin/Nkpt)
+    Nspin = Int64(Nkspin / Nkpt)
     Eband = 0.0
     for ispin in 1:Nspin, ik in 1:Nkpt
-        ikspin = ik + (ispin - 1)*Nkpt
+        ikspin = ik + (ispin - 1) * Nkpt
         for ist in 1:Nstates
-            Eband = Eband + wk[ik]*Focc[ist,ikspin]*evals[ist,ikspin]
+            Eband = Eband + wk[ik] * Focc[ist, ikspin] * evals[ist, ikspin]
         end
     end
     return Eband
@@ -232,8 +232,8 @@ function _calc_diag_ethr_conv(iterSCF, ethr_current, ethr_evals_last)
     elseif iterSCF == 2
         ethr = 0.01
     else
-        ethr = ethr_current/5.0
-        ethr = max( ethr, ethr_evals_last )
+        ethr = ethr_current / 5.0
+        ethr = max(ethr, ethr_evals_last)
     end
     return ethr
 end

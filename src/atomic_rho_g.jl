@@ -1,7 +1,7 @@
 function atomic_rho_g(
     Ham::Hamiltonian{Txc,PsPot_UPF};
     starting_magnetization::Union{Nothing,Float64}=nothing
-) where Txc <: AbstractXCCalculator
+) where {Txc<:AbstractXCCalculator}
 
     atoms = Ham.atoms
     pw = Ham.pw
@@ -21,7 +21,7 @@ function atomic_rho_g(
     amesh = 0.0125
     rmax = 100.0
     eps8 = 1e-8
-    strf = calc_strfact( atoms, pw )
+    strf = calc_strfact(atoms, pw)
 
     # Determine maximum radial points for every atomic species
     NpointsMax = 0
@@ -37,8 +37,8 @@ function atomic_rho_g(
     rhocg = zeros(ComplexF64, Npoints, Nspin)
 
     # No starting magnetization is give, set them to a default value
-    if (Nspin == 2) && starting_magnetization==nothing
-        starting_magnetization = 0.1*ones(Nspecies)
+    if (Nspin == 2) && starting_magnetization == nothing
+        starting_magnetization = 0.1 * ones(Nspecies)
     end
 
     for isp in 1:Nspecies
@@ -51,19 +51,19 @@ function atomic_rho_g(
         for ir in 1:psp.Nr
             aux[ir] = psp.rhoatom[ir]
         end
-        rhocgnt[1] = PWDFT.integ_simpson( psp.Nr, aux, psp.rab )
+        rhocgnt[1] = PWDFT.integ_simpson(psp.Nr, aux, psp.rab)
 
         # G != 0 terms
         for igl in 2:Ngl
             gx = sqrt(G2_shells[igl])
             for ir in 1:psp.Nr
                 if psp.r[ir] < eps8
-                   aux[ir] = psp.rhoatom[ir]
+                    aux[ir] = psp.rhoatom[ir]
                 else
-                   aux[ir] = psp.rhoatom[ir]*sin(gx*psp.r[ir])/(psp.r[ir]*gx)
+                    aux[ir] = psp.rhoatom[ir] * sin(gx * psp.r[ir]) / (psp.r[ir] * gx)
                 end
             end
-            rhocgnt[igl] = PWDFT.integ_simpson( psp.Nr, aux, psp.rab )
+            rhocgnt[igl] = PWDFT.integ_simpson(psp.Nr, aux, psp.rab)
         end
 
         #println("sum rhocgnt = ", sum(rhocgnt))
@@ -71,14 +71,14 @@ function atomic_rho_g(
         for ig in 1:Ng
             ip = idx_g2r[ig]
             igl = idx_g2shells[ig]
-            rhocg[ip,1] += strf[ig,isp]*rhocgnt[igl]/CellVolume
+            rhocg[ip, 1] += strf[ig, isp] * rhocgnt[igl] / CellVolume
         end
 
         if Nspin == 2
             for ig in 1:Ng
                 ip = idx_g2r[ig]
                 igl = idx_g2shells[ig]
-                rhocg[ip,2] += starting_magnetization[isp]*strf[ig,isp]*rhocgnt[igl]/CellVolume
+                rhocg[ip, 2] += starting_magnetization[isp] * strf[ig, isp] * rhocgnt[igl] / CellVolume
             end
         end
 
@@ -91,14 +91,14 @@ function atomic_rho_g(
 
     #println("sum abs rhocg = ", sum(abs.(rhocg)))
 
-    charge = rhocg[1,1]*CellVolume
+    charge = rhocg[1, 1] * CellVolume
     print("atomic_rho_g: Initial charge = ", charge)
     # Renormalize
     println(" Renormalized to ", Nelectrons)
-    rhocg .*= Nelectrons/charge
+    rhocg .*= Nelectrons / charge
 
-    Rhoe = zeros(Npoints,Nspin)
-    Rhoe_tot = real(G_to_R(pw,rhocg[:,1]))*Npoints
+    Rhoe = zeros(Npoints, Nspin)
+    Rhoe_tot = real(G_to_R(pw, rhocg[:, 1])) * Npoints
 
     # Convert to Rhoe_up and Rhoe_dn    
     # Rhoe_tot = Rhoe_up + Rhoe_dn
@@ -106,14 +106,14 @@ function atomic_rho_g(
     # 2*Rhoe_up = Rhoe_tot + magn
     # 2*Rhoe_dn = Rhoe_tot - magn
     if Nspin == 2
-        magn = real(G_to_R(pw,rhocg[:,2]))*Npoints
-        Rhoe[:,1] = 0.5*(Rhoe_tot + magn)
-        Rhoe[:,2] = 0.5*(Rhoe_tot - magn)
+        magn = real(G_to_R(pw, rhocg[:, 2])) * Npoints
+        Rhoe[:, 1] = 0.5 * (Rhoe_tot + magn)
+        Rhoe[:, 2] = 0.5 * (Rhoe_tot - magn)
     else
-        Rhoe[:,1] = Rhoe_tot
+        Rhoe[:, 1] = Rhoe_tot
     end
 
-    println("atomic_rho_g: integ rhoe = ", sum(Rhoe)*CellVolume/Npoints)
+    println("atomic_rho_g: integ rhoe = ", sum(Rhoe) * CellVolume / Npoints)
 
     return Rhoe, rhocg
 
@@ -125,9 +125,9 @@ function _check_negative_rhoe(Rhoe, CellVolume)
     for ispin in 1:Nspin
         rhoneg = 0.0
         for ip in 1:Npoints
-            rhoneg = rhoneg + min(0.0, Rhoe[ip,ispin])
+            rhoneg = rhoneg + min(0.0, Rhoe[ip, ispin])
         end
-        rhoneg = rhoneg * CellVolume/Npoints
+        rhoneg = rhoneg * CellVolume / Npoints
         @printf("Negative rho for ispin %d: %15.10e\n", ispin, rhoneg)
     end
     return

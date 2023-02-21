@@ -1,7 +1,7 @@
 function op_S(
     Ham::Hamiltonian{Txc,PsPot_UPF},
     psi::AbstractArray{ComplexF64}
-) where Txc <: AbstractXCCalculator
+) where {Txc<:AbstractXCCalculator}
 
     Spsi = zeros(ComplexF64, size(psi))
     op_S!(Ham, psi, Spsi)
@@ -13,7 +13,7 @@ function op_S!(
     Ham::Hamiltonian{Txc,PsPot_UPF},
     psi::AbstractArray{ComplexF64},
     Spsi::AbstractArray{ComplexF64}
-) where Txc <: AbstractXCCalculator
+) where {Txc<:AbstractXCCalculator}
 
     # Check Vnl_KB construction
     ik = Ham.ik
@@ -23,8 +23,8 @@ function op_S!(
     pspots = Ham.pspots
     atoms = Ham.atoms
 
-    Ngwk = size(psi,1) # check againsts Ngw[k]
-    Nstates = size(psi,2)
+    Ngwk = size(psi, 1) # check againsts Ngw[k]
+    Nstates = size(psi, 2)
 
     Vnl_KB = pspotNL.betaNL[ik]
 
@@ -39,8 +39,8 @@ function op_S!(
     qq_at = pspotNL.qq_at
 
     ps = zeros(ComplexF64, nkb, Nstates)
-    
-    @views Spsi[:,:] = psi[:,:]
+
+    @views Spsi[:, :] = psi[:, :]
 
     for isp in 1:Nspecies
         #
@@ -50,7 +50,7 @@ function op_S!(
                     continue
                 end
                 idx1 = (indv_ijkb0[ia]+1):(indv_ijkb0[ia]+nh[isp])
-                ps[idx1,1:Nstates] = qq_at[1:nh[isp],1:nh[isp],ia] * betaNL_psi[idx1,:]
+                ps[idx1, 1:Nstates] = qq_at[1:nh[isp], 1:nh[isp], ia] * betaNL_psi[idx1, :]
 
             end
         else
@@ -60,13 +60,13 @@ function op_S!(
                         continue
                     end
                     idx1 = (indv_ijkb0[ia]+1):(indv_ijkb0[ia]+nh[isp])
-                    ps[idx1,1:Nstates] .= 0.0 + im*0.0
+                    ps[idx1, 1:Nstates] .= 0.0 + im * 0.0
                 end
             end
         end
     end
 
-    @views Spsi[:,:] += Vnl_KB * ps
+    @views Spsi[:, :] += Vnl_KB * ps
 
     return
 

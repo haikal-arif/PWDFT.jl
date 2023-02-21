@@ -22,13 +22,13 @@ function dense_to_smooth!(
     Ngs = pw.gvecs.Ng
     for ig in 1:Ngs
         ip_out = pw.gvecs.idx_g2r[ig] # smooth
-        ip_in  = pw.gvec.idx_g2r[ig] # dense
+        ip_in = pw.gvec.idx_g2r[ig] # dense
         aux_out[ip_out] = aux_in[ip_in]
     end
-    
+
     G_to_R!(pw, aux_out, smooth=true)
     # FIXME: Manual normalization
-    aux_out *= (NptsSmooth/NptsDense)  # XXX This is important!
+    aux_out *= (NptsSmooth / NptsDense)  # XXX This is important!
 
     v_out[1:NptsSmooth] = real(aux_out[1:NptsSmooth])
 
