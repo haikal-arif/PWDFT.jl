@@ -3,13 +3,13 @@ function test_O2()
     atoms = Atoms(ext_xyz_file=filename)
     pspots = get_default_PsPot_GTH(atoms)
 
-    electrons = Electrons( atoms, pspots )
+    electrons = Electrons(atoms, pspots)
     println(electrons)
 
-    electrons = Electrons( atoms, pspots, (5,7) )
+    electrons = Electrons(atoms, pspots, (5, 7))
     println(electrons)
 
-    electrons = Electrons( atoms, pspots, (7,5), Nstates_extra=1 )
+    electrons = Electrons(atoms, pspots, (7, 5), Nstates_extra=1)
     println(electrons)
 
     return nothing
@@ -21,25 +21,25 @@ function test_Ni_q18_fcc()
         1
 
         Ni  0.0  0.0  0.0
-        """, LatVecs = gen_lattice_fcc(5.0))
+        """, LatVecs=gen_lattice_fcc(5.0))
     println(atoms)
-    
+
     Nspecies = atoms.Nspecies
-    
-    pspots = Vector{PsPot_GTH}(undef,Nspecies)
+
+    pspots = Vector{PsPot_GTH}(undef, Nspecies)
     pspfiles = [joinpath(DIR_PSP_GTH_LDA, "Ni-q18.gth")]
     for isp in 1:Nspecies
         pspots[isp] = PsPot_GTH(pspfiles[isp])
         println(pspots[isp])
     end
 
-    electrons = Electrons( atoms, pspots, Nkpt=14, Nstates_empty=1 )
+    electrons = Electrons(atoms, pspots, Nkpt=14, Nstates_empty=1)
     println(electrons)
 
-    electrons = Electrons( atoms, pspots, Nkpt=14, Nstates_empty=1, Nspin=2 )
+    electrons = Electrons(atoms, pspots, Nkpt=14, Nstates_empty=1, Nspin=2)
     println(electrons)
 
-    electrons = Electrons( atoms, pspots, Nkpt=14, Nstates=13 )
+    electrons = Electrons(atoms, pspots, Nkpt=14, Nstates=13)
     println(electrons)
 
     return nothing

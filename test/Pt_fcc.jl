@@ -6,7 +6,7 @@ function init_Ham_Pt_fcc()
         Pt  0.0  0.0  0.0
         """, LatVecs=gen_lattice_fcc(3.9231 * ANG2BOHR))
 
-    pspfiles = [joinpath(DIR_PWDFT, "pseudopotentials", "pade_gth", "Pt-q10.gth")]
+    pspfiles = [joinpath(@__DIR__, "../pseudopotentials", "pade_gth", "Pt-q10.gth")]
     ecutwfc = 30.0
     return Hamiltonian(atoms, pspfiles, ecutwfc, meshk=[3, 3, 3], extra_states=4)
 end

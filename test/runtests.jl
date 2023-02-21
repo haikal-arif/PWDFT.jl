@@ -3,9 +3,9 @@ using Random
 using LinearAlgebra
 using Test
 
-const DIR_PWDFT = joinpath( dirname(pathof(PWDFT)), "..")
-const DIR_STRUCTURES = joinpath(DIR_PWDFT, "structures")
-const DIR_PSP_GTH_LDA = joinpath(DIR_PWDFT, "pseudopotentials", "pade_gth")
+const DIR_PWDFT = joinpath(dirname(pathof(PWDFT)), "..")
+const DIR_STRUCTURES = joinpath(@__DIR__, "../structures")
+const DIR_PSP_GTH_LDA = joinpath(@__DIR__, "../pseudopotentials", "pade_gth")
 
 include("test_gen_lattice.jl")
 

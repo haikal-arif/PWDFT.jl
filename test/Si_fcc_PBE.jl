@@ -7,7 +7,7 @@ function init_Ham_Si_fcc_PBE()
     Si  0.25  0.25  0.25
     """, in_bohr=true, LatVecs=gen_lattice_fcc(10.2631))
 
-    pspfiles = [joinpath(DIR_PWDFT, "pseudopotentials", "pbe_gth", "Si-q4.gth")]
+    pspfiles = [joinpath(@__DIR__, "../pseudopotentials", "pbe_gth", "Si-q4.gth")]
     ecutwfc = 15.0
     return Hamiltonian( atoms, pspfiles, ecutwfc, meshk=[3,3,3], xcfunc="PBE" )
 end
