@@ -19,7 +19,7 @@ end
 const Etot_Si_fcc_SCAN = -7.875081515 # PWSCF
 
 
-@testset "Si fcc PBE SCF Rhoe mix simple" begin
+@testset "Si fcc SCAN SCF Rhoe mix simple" begin
     Random.seed!(1234)
     Ham = init_Ham_Si_fcc_SCAN()
     KS_solve_SCF!(Ham, betamix=0.5, verbose=true)
@@ -28,7 +28,7 @@ const Etot_Si_fcc_SCAN = -7.875081515 # PWSCF
     @test Etot ≈ Etot_Si_fcc_SCAN atol = 5e-3
 end
 
-@testset "Si fcc PBE SCF Rhoe mix linear_adaptive" begin
+@testset "Si fcc SCAN SCF Rhoe mix linear_adaptive" begin
     Random.seed!(1234)
     Ham = init_Ham_Si_fcc_SCAN()
     KS_solve_SCF!(Ham, betamix=0.1, mix_method="linear_adaptive", verbose=true)
@@ -37,7 +37,7 @@ end
     @test Etot ≈ Etot_Si_fcc_SCAN atol = 5e-3
 end
 
-@testset "Si fcc PBE SCF Rhoe mix anderson" begin
+@testset "Si fcc SCAN SCF Rhoe mix anderson" begin
     Random.seed!(1234)
     Ham = init_Ham_Si_fcc_SCAN()
     KS_solve_SCF!(Ham, betamix=0.2, mix_method="anderson", verbose=true)
@@ -46,7 +46,7 @@ end
     @test Etot ≈ Etot_Si_fcc_SCAN atol = 5e-3
 end
 
-@testset "Si fcc PBE SCF Rhoe mix pulay" begin
+@testset "Si fcc SCAN SCF Rhoe mix pulay" begin
     Random.seed!(1234)
     Ham = init_Ham_Si_fcc_SCAN()
     KS_solve_SCF!(Ham, betamix=0.2, mix_method="pulay", verbose=true)
@@ -55,7 +55,7 @@ end
     @test Etot ≈ Etot_Si_fcc_SCAN atol = 5e-3
 end
 
-@testset "Si fcc PBE SCF Rhoe mix ppulay" begin
+@testset "Si fcc SCAN SCF Rhoe mix ppulay" begin
     Random.seed!(1234)
     Ham = init_Ham_Si_fcc_SCAN()
     KS_solve_SCF!(Ham, betamix=0.2, mix_method="ppulay", verbose=true)
@@ -64,7 +64,7 @@ end
     @test Etot ≈ Etot_Si_fcc_SCAN atol = 5e-3
 end
 
-@testset "Si fcc PBE SCF Rhoe mix rpulay" begin
+@testset "Si fcc SCAN SCF Rhoe mix rpulay" begin
     Random.seed!(1234)
     Ham = init_Ham_Si_fcc_SCAN()
     KS_solve_SCF!(Ham, betamix=0.2, mix_method="rpulay", verbose=true)
@@ -73,7 +73,7 @@ end
     @test Etot ≈ Etot_Si_fcc_SCAN atol = 5e-3
 end
 
-@testset "Si fcc PBE SCF Rhoe mix broyden" begin
+@testset "Si fcc SCAN SCF Rhoe mix broyden" begin
     Random.seed!(1234)
     Ham = init_Ham_Si_fcc_SCAN()
     KS_solve_SCF!(Ham, betamix=0.1, mix_method="broyden", verbose=true)
@@ -82,7 +82,7 @@ end
     @test Etot ≈ Etot_Si_fcc_SCAN atol = 5e-3
 end
 
-@testset "Si fcc PBE SCF potential mix simple" begin
+@testset "Si fcc SCAN SCF potential mix simple" begin
     Random.seed!(1234)
     Ham = init_Ham_Si_fcc_SCAN()
     KS_solve_SCF_potmix!(Ham, betamix=0.5, mix_method="simple", verbose=true)
@@ -91,7 +91,7 @@ end
     @test Etot ≈ Etot_Si_fcc_SCAN atol = 5e-3
 end
 
-@testset "Si fcc PBE SCF potential mix linear_adaptive" begin
+@testset "Si fcc SCAN SCF potential mix linear_adaptive" begin
     Random.seed!(1234)
     Ham = init_Ham_Si_fcc_SCAN()
     KS_solve_SCF_potmix!(Ham, betamix=0.1, mix_method="linear_adaptive", verbose=true)
@@ -100,7 +100,7 @@ end
     @test Etot ≈ Etot_Si_fcc_SCAN atol = 5e-3
 end
 
-@testset "Si fcc PBE SCF potential mix broyden" begin
+@testset "Si fcc SCAN SCF potential mix broyden" begin
     Random.seed!(1234)
     Ham = init_Ham_Si_fcc_SCAN()
     KS_solve_SCF_potmix!(Ham, betamix=0.1, mix_method="broyden", verbose=true)
