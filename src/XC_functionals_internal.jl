@@ -25,3 +25,4 @@ include("XC_funcs/XC_x_slater.jl")
 
 include("XC_funcs/XC_x_slater_spin.jl")
 include("XC_funcs/XC_x_slater_spin_E.jl")
+include("XC_funcs/XC_x_scan.jl")
