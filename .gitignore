@@ -46,3 +46,4 @@ deps/deps.jl
 Manifest.toml
 .vscode/*
 *.dat
+*.txt
