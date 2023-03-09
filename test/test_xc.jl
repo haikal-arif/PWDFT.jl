@@ -7,3 +7,6 @@ end
 # @testset "GGA_PBE xc" begin
 #     @test calc_epsxc_PBE(rho, sigma) ≈ [-0.459808, -0.5073, -0.562455, -0.611123, -0.653534] atol=1e-5
 # end
+@testset "MGGA_SCAN xc" begin
+    @test calc_Ex_SCAN(LibxcXCCalculator(), rho) ≈ [-0.51789, -0.64225, -0.728923, -0.797671, -0.85558] atol = 1e-5
+end
