@@ -1,3 +1,6 @@
+# Strongly Constrained and Appropriately Normed Semilocal Density Functional
+# Sun, J., Ruzsinzky, A., Perdew, J.P
+# 10.1103/PhysRevLett.115.036402
 function XC_x_scan(rho, grho, psi, τ)
     τunif = (0.3) * (3 * π^2)^(2 / 3) * rho^(5 / 3)
     τW = grho^2 / 8 * rho
@@ -16,15 +19,13 @@ function XC_x_scan(rho, grho, psi, τ)
     c1x = 0.667
     c2x = 0.8
     dx = 1.24
-    fx = 0
-    if (1 - α) > 0
-        fx = exp(-c1x * α / (1 - α))
-    else
-        fx = -dx * exp(c2x / (1 - α))
-    end
+    fx = ((1 - α) > 0) ? exp(-c1x * α / (1 - α)) : (-dx * exp(c2x / (1 - α)))
+
     h0x = 1.174
+    a1 = 4.9479
+    gx = 1 - exp(-a1 / sqrt(s))
     Fx = (h1x + fx * (h0x - h1x)) * gx
-    exunif = -(3 / (4 * π)) * (3 * π^2 * n)^(1 / 3)
+    exunif = -(3 / (4 * π)) * (3 * π^2 * rho)^(1 / 3)
     sx = rho * exunif * Fx
     return sx
 end
