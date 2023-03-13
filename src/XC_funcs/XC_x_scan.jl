@@ -2,9 +2,6 @@
 # Sun, J., Ruzsinzky, A., Perdew, J.P
 # 10.1103/PhysRevLett.115.036402
 function XC_x_scan(ρ, norm∇ρ, τ)
-  # todo : change abs(norm∇ρ) into magnitude
-  # Ask the shape of norm∇ρ
-  # Ask about differentiation in respect to a vector
   τunif = (0.3) * (3 * π^2)^(2 / 3) * ρ^(5 / 3)
   τW = norm∇ρ^2 / 8 * ρ
 
