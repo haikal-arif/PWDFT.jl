@@ -1,6 +1,6 @@
 rho = [0.1, 0.2, 0.3, 0.4, 0.5]
 sigma = [0.2, 0.3, 0.4, 0.5, 0.6]
-lapl = [0.2, 0.3, 0.4, 0.5, 0.6]
+tau = [0.2, 0.3, 0.4, 0.5, 0.6]
 
 @testset "LDA_VWN xc" begin
     @test calc_epsxc_VWN(LibxcXCCalculator(), rho) ≈ [-0.396206, -0.490557, -0.556226, -0.608272, -0.652089] atol = 1e-5
@@ -12,6 +12,6 @@ end
 # end
 @testset "MGGA_SCAN xc" begin
     # From Libxc
-    @test XC_x_scan(rho, norm∇ρ, τ) ≈ [-0.408368, -0.471540, -0.533396, -0.591370, -0.642808] atol = 1e-5
+    @test XC_x_scan(rho, sigma, tau) ≈ [-0.408368, -0.471540, -0.533396, -0.591370, -0.642808] atol = 1e-5
 end
 
