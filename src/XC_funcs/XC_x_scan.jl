@@ -1,7 +1,7 @@
 # Strongly Constrained and Appropriately Normed Semilocal Density Functional
 # Sun, J., Ruzsinzky, A., Perdew, J.P
 # 10.1103/PhysRevLett.115.036402
-function XC_x_scan(ρ, norm∇ρ, τ)
+function XC_x_scan(ρ::Float64, norm∇ρ::Float64, τ::Float64)
   τunif = (0.3) * (3 * π^2)^(2 / 3) * ρ^(5 / 3)
   τW = norm∇ρ^2 / 8 * ρ
 
@@ -84,8 +84,21 @@ function XC_x_scan(ρ, norm∇ρ, τ)
 
   sx = ρ * nexunif * Fx
   v1x = (Fx * ∂nexunif∂n) + (ρ * nexunif * (∂Fx∂n)) # ∂e/∂n
-  v2x = nexunif * ∂Fx∂norm∇ρ / norm∇ρ # ∂e/∂norm∇ρ
+  v2x = nexunif * ∂Fx∂norm∇ρ / norm∇ρ # ∂e/∂n|∇ρ| * 1/|ρ|
   v3x = nexunif * ∂Fx∂τ
+
+  return sx, v1x, v2x, v3x
+end
+
+function XC_x_scan(ρ::Vector{Float64}, norm∇ρ::Vector{Float64}, τ::Vector{Float64})
+  sx = zeros(size(ρ))
+  v1x = zeros(size(ρ))
+  v2x = zeros(size(ρ))
+  v3x = zeros(size(ρ))
+
+  for index in length(ρ)
+    sx[index], v1x[index], v2x[index], v3x[index] = XC_x_scan(ρ[index], norm∇ρ[index], τ[index])
+  end
 
   return sx, v1x, v2x, v3x
 end

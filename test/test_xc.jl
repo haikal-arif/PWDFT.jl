@@ -12,6 +12,8 @@ end
 # end
 @testset "MGGA_SCAN xc" begin
     # From Libxc
-    @test XC_x_scan(rho, sigma, tau) ≈ [-0.408368, -0.471540, -0.533396, -0.591370, -0.642808] atol = 1e-5
+    #
+    ex, v1, v2, v3 = XC_x_scan(rho, sigma, tau)
+    @test ex ≈ [-0.408368, -0.471540, -0.533396, -0.591370, -0.642808] atol = 1e-5
 end
 
