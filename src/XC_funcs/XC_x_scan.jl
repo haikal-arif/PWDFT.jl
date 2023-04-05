@@ -1,11 +1,15 @@
+using ForwardDiff: derivative
+using ForwardDiff
+
 # Strongly Constrained and Appropriately Normed Semilocal Density Functional
 # Sun, J., Ruzsinzky, A., Perdew, J.P
 # 10.1103/PhysRevLett.115.036402
 function XC_x_scan(ρ::Float64, norm∇ρ::Float64, τ::Float64)
-  τunif = (0.3) * (3 * π^2)^(2 / 3) * ρ^(5 / 3)
-  τW = norm∇ρ^2 / 8 * ρ
+  τunif(n) = (0.3) * (3 * π^2)^(2 / 3) * n^(5 / 3)
+  τW(n, norm∇n) = norm∇n^2 / 8 * n
 
-  α = (τ - τW) / τunif
+  α(n, norm∇n, tau) = (tau - τW(n, norm∇n)) / τunif(n)
+  DαDρ(n, norm∇n, tau) = derivative(r -> α(r, norm∇n, tau), r)
   ∂α∂ρ = (norm∇ρ^2 - 5 * ρ * τ) / (2.7 * π * π * ρ^(11 / 3))
   ∂α∂norm∇ρ = -(5 * norm∇ρ) / (6 * (3 * π * π)^(2 / 3) * ρ^(8 / 3))
   ∂α∂τ = 1 / (0.3 * (3 * π * π)^(2 / 3) * ρ^(5 / 3))
@@ -28,7 +32,7 @@ function XC_x_scan(ρ::Float64, norm∇ρ::Float64, τ::Float64)
   ∂x∂norm∇ρ = 2(b1 * s^2 + b2 * (1 - α) * exp(-b3 * (1 - α) * (1 - α))) * (2 * b1 * s * ∂s∂norm∇ρ + (2 * b3 * (1 - α)^2 - 1) * b2 * exp(-b3 * (1 - α)^2) * ∂α∂norm∇ρ) + 2(μAK + b4 * s * s * exp(-b4 * s * s / μAK) * (2 - b4 * s * s / μAK)) * s * ∂s∂norm∇ρ
   ∂x∂τ = 2(b1 * s^2 + b2 * (1 - α) * exp(-b3 * (1 - α) * (1 - α))) * (2 * b1 * s * ∂s∂τ + (2 * b3 * (1 - α)^2 - 1) * b2 * exp(-b3 * (1 - α)^2) * ∂α∂τ) + 2(μAK + b4 * s * s * exp(-b4 * s * s / μAK) * (2 - b4 * s * s / μAK)) * s * ∂s∂τ
 
-  h1x = 1 + k1 - k1 / (1 + x / k1)
+  h1x = 1 + k1 * (1 - k1 / (k1 + x))
   ∂h1x∂ρ = 1 / ((1 + x / k1) * (1 + x / k1)) * ∂x∂ρ
   ∂h1x∂norm∇ρ = 1 / ((1 + x / k1) * (1 + x / k1)) * ∂x∂norm∇ρ
   ∂h1x∂τ = 1 / ((1 + x / k1) * (1 + x / k1)) * ∂x∂τ
@@ -96,7 +100,7 @@ function XC_x_scan(ρ::Vector{Float64}, norm∇ρ::Vector{Float64}, τ::Vector{F
   v2x = zeros(size(ρ))
   v3x = zeros(size(ρ))
 
-  for index in length(ρ)
+  for index in 1:length(ρ)
     sx[index], v1x[index], v2x[index], v3x[index] = XC_x_scan(ρ[index], norm∇ρ[index], τ[index])
   end
 

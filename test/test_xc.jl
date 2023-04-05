@@ -1,6 +1,13 @@
+using Test
+using PWDFT
+
+include("../src/XC_funcs/XC_x_scan.jl")
+
 rho = [0.1, 0.2, 0.3, 0.4, 0.5]
 sigma = [0.2, 0.3, 0.4, 0.5, 0.6]
 tau = [0.2, 0.3, 0.4, 0.5, 0.6]
+
+
 
 @testset "LDA_VWN xc" begin
     @test calc_epsxc_VWN(LibxcXCCalculator(), rho) ≈ [-0.396206, -0.490557, -0.556226, -0.608272, -0.652089] atol = 1e-5
