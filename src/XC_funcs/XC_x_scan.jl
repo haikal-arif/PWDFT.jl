@@ -5,7 +5,7 @@ using ForwardDiff: derivative
 # 10.1103/PhysRevLett.115.036402
 function XC_x_scan(ρ::Float64, norm∇ρ::Float64, τ::Float64)
   τunif(n) = (0.3) * (3 * π^2)^(2 / 3) * n^(5 / 3)
-  τW(n, norm∇n) = norm∇n^2 / 8 * n
+  τW(n, norm∇n) = norm∇n^2 / (8 * n)
   α(n, norm∇n, tau) = (tau - τW(n, norm∇n)) / τunif(n)
   s(n, norm∇n) = norm∇n / (2 * (3 * π^2)^(1 / 3) * n^(4 / 3))
 
