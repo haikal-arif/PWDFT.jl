@@ -2,11 +2,13 @@ using Test
 using PWDFT
 
 include("../src/XC_funcs/XC_x_scan.jl")
+include("../src/Libxc_old.jl")
+include("../src/XC_funcs/XC_x_slater.jl")
 
 rho = [0.1, 0.2, 0.3, 0.4, 0.5]
 sigma = [0.2, 0.3, 0.4, 0.5, 0.6]
 tau = [0.2, 0.3, 0.4, 0.5, 0.6]
-
+lapl = [0.0, 0.0, 0.0, 0.0, 0.0]
 
 
 @testset "LDA_VWN xc" begin
@@ -15,12 +17,17 @@ tau = [0.2, 0.3, 0.4, 0.5, 0.6]
 end
 
 # @testset "GGA_PBE xc" begin
-#     @test calc_epsxc_PBE(rho, sigma) ≈ [-0.459808, -0.5073, -0.562455, -0.611123, -0.653534] atol=1e-5
+#     @test calc_epsxc_PBE(rho, sigma) ≈ [-0.459808, -0.5073, -0.562455, -0.611123, -0.653534] atol = 1e-5
 # end
+
 @testset "MGGA_SCAN xc" begin
-    # From Libxc
-    #
+    exc_libxc = zeros(5)
+    xc_func_ptr = Libxc_xc_func_alloc()
+    Libxc_xc_func_init(xc_func_ptr, 263, 1)
+    Libxc_xc_mgga_exc!(xc_func_ptr, 5, rho, sigma, lapl, tau, exc_libxc)
+    Libxc_xc_func_end(xc_func_ptr)
+
     ex, v1, v2, v3 = XC_x_scan(rho, sigma, tau)
-    @test ex ≈ [-0.408368, -0.471540, -0.533396, -0.591370, -0.642808] atol = 1e-5
+    @test ex ≈ exc_libxc atol = 1e-5
 end
 
