@@ -1,13 +1,21 @@
-using ForwardDiff: derivative
 
 # Strongly Constrained and Appropriately Normed Semilocal Density Functional
 # Sun, J., Ruzsinzky, A., Perdew, J.P
 # 10.1103/PhysRevLett.115.036402
+
 function XC_x_scan(ρ::Float64, norm∇ρ::Float64, τ::Float64)
-  τunif(n) = (0.3) * (3 * π^2)^(2 / 3) * n^(5 / 3)
-  τW(n, norm∇n) = norm∇n^2 / (8 * n)
-  α(n, norm∇n, tau) = (tau - τW(n, norm∇n)) / τunif(n)
-  s(n, norm∇n) = norm∇n / (2 * (3 * π^2)^(1 / 3) * n^(4 / 3))
+  τunif = (0.3) * (3 * π^2)^(2 / 3) * ρ^(5 / 3)
+  τW = norm∇ρ^2 / (8 * ρ)
+
+  α = (τ - τW) / τunif
+  ∂α∂ρ = (norm∇ρ^2 - 5 * ρ * τ) / (2.7 * π * π * ρ^(11 / 3))
+  ∂α∂norm∇ρ = -(5 * norm∇ρ) / (6 * (3 * π * π)^(2 / 3) * ρ^(8 / 3))
+  ∂α∂τ = 1 / (0.3 * (3 * π * π)^(2 / 3) * ρ^(5 / 3))
+
+  s = norm∇ρ / (2 * (3 * π^2)^(1 / 3) * ρ^(4 / 3))
+  ∂s∂ρ = -2 * norm∇ρ / (3 * (3 * π * π)^(1 / 3) * ρ^(7 / 3))
+  ∂s∂norm∇ρ = 1 / (2 * (3 * π * π)^(1 / 3) * ρ^(4 / 3))
+  ∂s∂τ = 0
 
   μAK = 10 / 81
   b2 = sqrt(5913 / 405000)
@@ -17,32 +25,71 @@ function XC_x_scan(ρ::Float64, norm∇ρ::Float64, τ::Float64)
   k1 = 0.065
   b4 = μAK^2 / k1 - (1606 / 18225) - b1^2
 
-  x(n, norm∇n, tau) = μAK * s(n, norm∇n)^2 * (1 + (b4 * (s(n, norm∇n)^2) / μAK) * exp(-abs(b4) * s(n, norm∇n)^2 / μAK)) + (b1 * s(n, norm∇n)^2 + b2 * (1 - α(n, norm∇n, τ)) * exp(-b3 * (1 - α(n, norm∇n, tau))^2))^2
+  x = μAK * s^2 * (1 + (b4 * (s^2) / μAK) * exp(-abs(b4) * s^2 / μAK)) + (b1 * s^2 + b2 * (1 - α) * exp(-b3 * (1 - α)^2))^2
+  ∂x∂ρ = 2(b1 * s^2 + b2 * (1 - α) * exp(-b3 * (1 - α) * (1 - α))) * (2 * b1 * s * ∂s∂ρ + (2 * b3 * (1 - α)^2 - 1) * b2 * exp(-b3 * (1 - α)^2) * ∂α∂ρ) + 2(μAK + b4 * s * s * exp(-b4 * s * s / μAK) * (2 - b4 * s * s / μAK)) * s * ∂s∂ρ
+  ∂x∂norm∇ρ = 2(b1 * s^2 + b2 * (1 - α) * exp(-b3 * (1 - α) * (1 - α))) * (2 * b1 * s * ∂s∂norm∇ρ + (2 * b3 * (1 - α)^2 - 1) * b2 * exp(-b3 * (1 - α)^2) * ∂α∂norm∇ρ) + 2(μAK + b4 * s * s * exp(-b4 * s * s / μAK) * (2 - b4 * s * s / μAK)) * s * ∂s∂norm∇ρ
+  ∂x∂τ = 2(b1 * s^2 + b2 * (1 - α) * exp(-b3 * (1 - α) * (1 - α))) * (2 * b1 * s * ∂s∂τ + (2 * b3 * (1 - α)^2 - 1) * b2 * exp(-b3 * (1 - α)^2) * ∂α∂τ) + 2(μAK + b4 * s * s * exp(-b4 * s * s / μAK) * (2 - b4 * s * s / μAK)) * s * ∂s∂τ
 
-  h1x(n, norm∇n, tau) = 1 + k1 * (1 - k1 / (k1 + x(n, norm∇n, tau)))
+  h1x = 1 + k1 * (1 - k1 / (k1 + x))
+  ∂h1x∂ρ = 1 / ((1 + x / k1) * (1 + x / k1)) * ∂x∂ρ
+  ∂h1x∂norm∇ρ = 1 / ((1 + x / k1) * (1 + x / k1)) * ∂x∂norm∇ρ
+  ∂h1x∂τ = 1 / ((1 + x / k1) * (1 + x / k1)) * ∂x∂τ
 
   c1x = 0.667
   c2x = 0.8
   dx = 1.24
 
-  heaviside(t) = 0.5 * (sign(t) + 1)
-  fx(n, norm∇n, tau) = exp(-c1x * α(n, norm∇n, tau) / (1 - α(n, norm∇n, tau))) * heaviside(1 - α(n, norm∇n, tau)) + (-dx * exp(c2x / (1 - α(n, norm∇n, tau)))) * (1 - heaviside(1 - α(n, norm∇n, tau)))
+  fx = if ((1 - α) > 0)
+    exp(-c1x * α / (1 - α))
+  else
+    (-dx * exp(c2x / (1 - α)))
+  end
+
+  ∂fx∂ρ = if ((1 - α) > 0)
+    fx * (-c1x / (1 - α)) * ∂α∂ρ
+  else
+    fx * (c2x / (1 - α)^2) * ∂α∂ρ
+  end
+
+  ∂fx∂norm∇ρ = if ((1 - α) > 0)
+    fx * (-c1x / (1 - α)) * ∂α∂norm∇ρ
+  else
+    fx * (c2x / (1 - α)^2) * ∂α∂norm∇ρ
+  end
+
+  ∂fx∂τ = if ((1 - α) > 0)
+    fx * (-c1x / (1 - α)) * ∂α∂τ
+  else
+    fx * (c2x / (1 - α)^2) * ∂α∂τ
+  end
 
   h0x = 1.174
   a1 = 4.9479
 
-  gx(n, norm∇n) = 1 - exp(-a1 / sqrt(s(n, norm∇n)))
-  Fxa(n, norm∇n, tau) = h1x(n, norm∇n, tau) + fx(n, norm∇n, tau) * (h0x - h1x(n, norm∇n, tau))
-  Fx(n, norm∇n, tau) = Fxa(n, norm∇n, tau) * gx(n, norm∇n)
+  gx = 1 - exp(-a1 / sqrt(s))
+  ∂gx∂n = -0.5 * a1 * s^(-1.5) * (1 - gx) * ∂s∂ρ
+  ∂gx∂norm∇ρ = -0.5 * a1 * s^(-1.5) * (1 - gx) * ∂s∂norm∇ρ
+  ∂gx∂τ = -0.5 * a1 * s^(-1.5) * (1 - gx) * ∂s∂τ
 
-  nexunif(n) = -(3 / (4 * π)) * (3 * π^2 * n)^(1 / 3)
+  Fxa = (h1x + fx * (h0x - h1x))
+  ∂Fxa∂n = ∂fx∂ρ * (h0x - h1x) + (1 - fx) * ∂h1x∂ρ
+  ∂Fxa∂norm∇ρ = ∂fx∂norm∇ρ * (h0x - h1x) + (1 - fx) * ∂h1x∂norm∇ρ
+  ∂Fxa∂τ = ∂fx∂τ * (h0x - h1x) + (1 - fx) * ∂h1x∂τ
 
-  sx(n, norm∇n, tau) = nexunif(n) * Fx(n, norm∇n, tau)
-  v1x(n, norm∇n, tau) = derivative(r -> sx(r, norm∇n, tau), n)
-  v2x(n, norm∇n, tau) = derivative(r -> sx(n, r, tau), norm∇n)
-  v3x(n, norm∇n, tau) = derivative(r -> sx(n, norm∇n, r), tau)
+  Fx = Fxa * gx
+  ∂Fx∂n = Fxa * ∂gx∂n + gx * ∂Fxa∂n
+  ∂Fx∂norm∇ρ = Fxa * ∂gx∂norm∇ρ + gx * ∂Fxa∂norm∇ρ
+  ∂Fx∂τ = Fxa * ∂gx∂τ + gx * ∂Fxa∂τ
 
-  return sx(ρ, norm∇ρ, τ), v1x(ρ, norm∇ρ, τ), v2x(ρ, norm∇ρ, τ) / norm∇ρ, v3x(ρ, norm∇ρ, τ)
+  nexunif = -(3 / (4 * π)) * (3 * π^2 * ρ)^(1 / 3)
+  ∂nexunif∂n = -1 * (3 * ρ / π)^(1 / 3)
+
+  sx = nexunif * Fx
+  v1x = (Fx * ∂nexunif∂n) + (ρ * nexunif * (∂Fx∂n)) # ∂e/∂n
+  v2x = nexunif * ∂Fx∂norm∇ρ / norm∇ρ # ∂e/∂n|∇ρ| * 1/|ρ|
+  v3x = nexunif * ∂Fx∂τ
+
+  return sx, v1x, v2x, v3x
 end
 
 function XC_x_scan(ρ::Vector{Float64}, norm∇ρ::Vector{Float64}, τ::Vector{Float64})
@@ -57,3 +104,4 @@ function XC_x_scan(ρ::Vector{Float64}, norm∇ρ::Vector{Float64}, τ::Vector{F
 
   return sx, v1x, v2x, v3x
 end
+export XC_x_scan
