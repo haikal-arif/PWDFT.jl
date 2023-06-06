@@ -2,6 +2,8 @@ using Test
 using PWDFT
 
 include("../src/XC_funcs/XC_x_scan.jl")
+include("../src/XC_funcs/XC_c_scan.jl")
+include("../src/XC_funcs/XC_c_lsda.jl")
 include("../src/Libxc_old.jl")
 include("../src/XC_funcs/XC_x_slater.jl")
 
@@ -22,12 +24,20 @@ end
 
 @testset "MGGA_SCAN xc" begin
     exc_libxc = zeros(5)
+    ex_libxc = zeros(5)
+    ec_libxc = zeros(5)
     xc_func_ptr = Libxc_xc_func_alloc()
     Libxc_xc_func_init(xc_func_ptr, 263, 1)
-    Libxc_xc_mgga_exc!(xc_func_ptr, 5, rho, sigma, lapl, tau, exc_libxc)
+    Libxc_xc_mgga_exc!(xc_func_ptr, 5, rho, sigma, lapl, tau, ex_libxc)
+    Libxc_xc_func_init(xc_func_ptr, 267, 1)
+    Libxc_xc_mgga_exc!(xc_func_ptr, 5, rho, sigma, lapl, tau, ec_libxc)
     Libxc_xc_func_end(xc_func_ptr)
 
+    exc_libxc = ex_libxc + ec_libxc
+
     ex, v1, v2, v3 = XC_x_scan(rho, sigma, tau)
-    @test ex ≈ exc_libxc atol = 1e-5
+    @test ex ≈ ex_libxc atol = 1e-5
+    ec, v1, v2, v3 = XC_c_scan(rho, sigma, tau)
+    @test ex + ec ≈ exc_libxc atol = 1e-5
 end
 

@@ -17,6 +17,7 @@ include("XC_funcs/XC_c_vwn.jl")
 
 include("XC_funcs/XC_c_vwn_spin.jl")
 
+include("XC_funcs/XC_c_lsda.jl")
 
 include("XC_funcs/XC_x_pbe.jl")
 include("XC_funcs/XC_x_pbe_E.jl")
