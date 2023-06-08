@@ -3,7 +3,7 @@ using Libxc
 function calc_KEdens!(
     Ham::Hamiltonian,
     psiks::BlochWavefunc,
-    KEdens::Array{Float64,2}
+    KEdens::Array{Float64,2},
 )
 
     pw = Ham.pw
@@ -84,7 +84,8 @@ end
 function calc_epsxc_SCAN(
     Ham::Hamiltonian,
     psiks::BlochWavefunc,
-    Rhoe::Array{Float64,1}
+    Rhoe::Array{Float64,1},
+    use_internal=false
 )
 
     xc_calc = Ham.xc_calc
@@ -92,9 +93,6 @@ function calc_epsxc_SCAN(
 
     FUNC_IDX = 263 # mgga x scan
     FUNC_IDC = 267 # mgga c scan
-
-    #FUNC_IDX = 202 # mgga x tpss
-    #FUNC_IDC = 231 # mgga c tpss
 
     Npoints = size(Rhoe)[1]
     Nspin = 1
@@ -112,7 +110,7 @@ function calc_epsxc_SCAN(
     calc_KEdens!(Ham, psiks, KEdens_)
     KEdens = reshape(KEdens_, Npoints)
 
-    lapl = zeros(Npoints)
+
 
     # apply threshold
     #for ip in 1:Npoints
@@ -125,20 +123,30 @@ function calc_epsxc_SCAN(
     eps_x = zeros(Float64, Npoints)
     eps_c = zeros(Float64, Npoints)
 
-    ptr = Libxc_xc_func_alloc()
-    # exchange part
-    Libxc_xc_func_init(ptr, FUNC_IDX, Nspin)
-    @views Libxc_xc_mgga_exc!(ptr, Npoints, Rhoe, gRhoe2, lapl, KEdens, eps_x)
-    Libxc_xc_func_end(ptr)
 
-    #
-    # correlation part
-    Libxc_xc_func_init(ptr, FUNC_IDC, Nspin)
-    @views Libxc_xc_mgga_exc!(ptr, Npoints, Rhoe, gRhoe2, lapl, KEdens, eps_c)
-    Libxc_xc_func_end(ptr)
 
-    #
-    Libxc_xc_func_free(ptr)
+    if use_internal
+        eps_x, _, _, _ = XC_x_scan(Rhoe, gRhoe2, KEdens)
+        eps_c, _, _, _ = XC_c_scan(Rhoe, gRhoe2, KEdens)
+    else
+        lapl = zeros(Npoints)
+        ptr = Libxc_xc_func_alloc()
+        # exchange part
+        Libxc_xc_func_init(ptr, FUNC_IDX, Nspin)
+        @views Libxc_xc_mgga_exc!(ptr, Npoints, Rhoe, gRhoe2, lapl, KEdens, eps_x)
+        Libxc_xc_func_end(ptr)
+
+        #
+        # correlation part
+        Libxc_xc_func_init(ptr, FUNC_IDC, Nspin)
+        @views Libxc_xc_mgga_exc!(ptr, Npoints, Rhoe, gRhoe2, lapl, KEdens, eps_c)
+        Libxc_xc_func_end(ptr)
+
+        #
+        Libxc_xc_func_free(ptr)
+    end
+
+
 
     return eps_x + eps_c
 
@@ -148,7 +156,8 @@ function calc_Vxc_SCAN!(
     Ham::Hamiltonian,
     psiks::BlochWavefunc,
     Rhoe::Array{Float64,1},
-    V_xc::Array{Float64,1}
+    V_xc::Array{Float64,1},
+    use_internal=false
 )
 
     xc_calc = Ham.xc_calc
@@ -156,9 +165,6 @@ function calc_Vxc_SCAN!(
 
     FUNC_IDX = 263 # mgga x scan
     FUNC_IDC = 267 # mgga c scan
-
-    #FUNC_IDX = 202 # mgga x tpss
-    #FUNC_IDC = 231 # mgga c tpss
 
     Npoints = size(Rhoe, 1)
     Nspin = 1
@@ -197,17 +203,24 @@ function calc_Vxc_SCAN!(
     Vtau_x = zeros(Float64, Npoints)
     Vtau_c = zeros(Float64, Npoints)
 
-    ptr = Libxc_xc_func_alloc()
-    # exchange part
-    Libxc_xc_func_init(ptr, FUNC_IDX, Nspin)
-    Libxc_xc_mgga_vxc!(ptr, Npoints, Rhoe, gRhoe2, lapl, KEdens, V_x, Vg_x, Vlapl, Vtau_x)
-    Libxc_xc_func_end(ptr)
+    if use_internal
+        _, V_x, Vg_x, Vtau_x = XC_x_scan(Rhoe, gRhoe2, KEdens)
+        _, V_c, Vg_c, Vtau_c = XC_c_scan(Rhoe, gRhoe2, KEdens)
+    else
+        ptr = Libxc_xc_func_alloc()
+        # exchange part
+        Libxc_xc_func_init(ptr, FUNC_IDX, Nspin)
+        Libxc_xc_mgga_vxc!(ptr, Npoints, Rhoe, gRhoe2, lapl, KEdens, V_x, Vg_x, Vlapl, Vtau_x)
+        Libxc_xc_func_end(ptr)
 
-    #
-    # correlation part
-    Libxc_xc_func_init(ptr, FUNC_IDC, Nspin)
-    Libxc_xc_mgga_vxc!(ptr, Npoints, Rhoe, gRhoe2, lapl, KEdens, V_c, Vg_c, Vlapl, Vtau_c)
-    Libxc_xc_func_end(ptr)
+        #
+        # correlation part
+        Libxc_xc_func_init(ptr, FUNC_IDC, Nspin)
+        Libxc_xc_mgga_vxc!(ptr, Npoints, Rhoe, gRhoe2, lapl, KEdens, V_c, Vg_c, Vlapl, Vtau_c)
+        Libxc_xc_func_end(ptr)
+    end
+
+
 
     # gradient correction
     hx = zeros(ComplexF64, pw.Ns)
