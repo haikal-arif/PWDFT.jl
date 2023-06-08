@@ -31,9 +31,22 @@ function XC_c_scan(ρ::Float64, norm∇ρ::Float64, τ::Float64)
   ∂s∂τ = 0
 
   r = (3 / (4 * π * ρ))^(1 / 3) # steinitz radius
+  ∂r∂ρ = -(1 / 3) * (3 / (4 * π))^(1 / 3) * ρ^(-4 / 3)
+  ∂r∂normρ = 0
+  ∂r∂τ = 0
+
   t = (3 * π * π / 16)^(1 / 3) * s / (ϕ * sqrt(r))
+  ∂t∂ρ = (3 * π * π / 16)^(1 / 3) * (sqrt(r) * ∂s∂ρ - s * 0.5 * ∂r∂ρ / sqrt(r)) / r
+  ∂t∂norm∇ρ = (3 * π * π / 16)^(1 / 3) * ∂s∂norm∇ρ / (ϕ * sqrt(r))
+  ∂t∂τ = 0
+
   heaviside(t) = 0.5 * (sign(t) + 1)
+
   β = 0.066725 * (1 + 0.1 * r) / (1 + 0.1778 * r)
+  ∂β∂ρ = 0.066725 * ((1 + 0.1778 * r) * 0.1 * ∂r∂ρ - (1 + 0.1 * r) * 0.1778 * ∂r∂ρ) / (1 + 0.1778 * r)^2
+  ∂β∂normρ = 0
+  ∂β∂τ = 0
+
   c1c = 0.64
   dc = 0.7
   c2c = 1.5
@@ -42,26 +55,64 @@ function XC_c_scan(ρ::Float64, norm∇ρ::Float64, τ::Float64)
   b1c = 0.0285764
 
   εLDA0c = -b1c / (1 + b2c * sqrt(r) + b3c * r)
+  vLDA0c = b1c * (1 + b2c * sqrt(r) + b3c * r)^(-2) * (0.5 * b2c / sqrt(r) + b3c) * ∂r∂ρ
+
   w0 = exp(-εLDA0c / b1c) - 1
+  ∂w0∂ρ = -1 * vLDA0c * (w0 + 1) / b1c
+  ∂w0∂normρ = 0
+  ∂w0∂τ = 0
+
   χ = 0.128026
   g = 1 / (1 + 4 * χ * s * s)^0.25
+  ∂g∂ρ = -2 * (1 + 4 * χ * s * s)^(-5 / 4) * χ * s * ∂s∂ρ
+  ∂g∂normρ = -2 * (1 + 4 * χ * s * s)^(-5 / 4) * χ * s * ∂s∂norm∇ρ
+
   H0 = b1c * log(1 + w0 * (1 - g))
+  ∂H0∂ρ = b1c * (∂w0∂ρ * (1 - g) - w0 * ∂g∂ρ) / (1 + w0 * (1 - g))
+  ∂H0∂normρ = -b1c * w0 * ∂g∂normρ / (1 + w0 * (1 - g))
+
   ε0c = (εLDA0c + H0)
+  ∂ε0c∂ρ = vLDA0c + ∂H0∂ρ
+  ∂ε0c∂normρ = ∂H0∂normρ
 
   eLSDAc, vLSDAc = XC_c_lsda(ρ)
-  w1 = exp(-eLSDAc / γ) - 1
-  t = (3 * π * π / 16)^(1 / 3) * s / (ϕ * sqrt(r))
-  A = β / (γ * w1)
-  gAt2 = 1 / (1 + 4 * A * t * t)^(1 / 4)
-  H1 = γ * ϕ * log(1 + w1 * (1 - gAt2))
-  ε1c = eLSDAc + H1
 
+  w1 = exp(-eLSDAc / γ) - 1
+  ∂w1∂ρ = -1 * vLSDAc * (w1 + 1) / γ
+  ∂w1∂nomrρ = 0
+  ∂w1∂τ = 0
+
+  A = β / (γ * w1)
+  ∂A∂ρ = (w1 * ∂β∂ρ - β * ∂w1∂ρ) / (γ * w1 * w1)
+  ∂A∂normρ = 0
+  ∂A∂τ = 0
+
+  gAt2 = 1 / (1 + 4 * A * t * t)^(0.25)
+  ∂gAt2∂ρ = -(0.25) * (1 + 4 * A * t * t)^(-5 / 4) * (4 * (A * 2 * t * ∂t∂ρ + ∂A∂ρ * t * t)) # ask why A doesn't derived
+  ∂gAt2∂normρ = -2 * gAt2 * A * t * ∂t∂norm∇ρ / (1 + 4 * A * t^2)
+  ∂gAt2∂τ = 0
+
+  H1 = γ * ϕ^3 * log(1 + w1 * (1 - gAt2))
+  ∂H1∂ρ = γ * ϕ^3 * (∂w1∂ρ * (1 - gAt2) - w1 * ∂gAt2∂ρ) / (1 + w1 * (1 - gAt2))
+  ∂H1∂normρ = γ * ϕ^3 * (-w1 * ∂gAt2∂normρ) / (1 + w1 * (1 - gAt2))
+
+  ε1c = eLSDAc + H1
+  ∂ε1c∂ρ = vLSDAc + ∂H1∂ρ
+  ∂ε1c∂normρ = ∂H1∂normρ
 
   fc = exp(-c1c * α / (1 - α)) * heaviside(1 - α) - dc * exp(c2c / (1 - α)) * heaviside(α - 1)
+  ∂fc∂ρ = (-c1c * ∂α∂ρ / (1 - α)^2) * exp(-c1c * α / (1 - α)) * heaviside(1 - α) -
+          (c2c * ∂α∂ρ / (1 - α)^2) * dc * exp(c2c / (1 - α)) * heaviside(α - 1)
+  ∂fc∂normρ = (-c1c * ∂α∂norm∇ρ / (1 - α)^2) * exp(-c1c * α / (1 - α)) * heaviside(1 - α) -
+              (c2c * ∂α∂norm∇ρ / (1 - α)^2) * dc * exp(c2c / (1 - α)) * heaviside(α - 1)
+  ∂fc∂τ = (-c1c * ∂α∂τ / (1 - α)^2) * exp(-c1c * α / (1 - α)) * heaviside(1 - α) -
+          (c2c * ∂α∂τ / (1 - α)^2) * dc * exp(c2c / (1 - α)) * heaviside(α - 1)
+
+
   sc = (ε1c + fc * (ε0c - ε1c))
-  v1c = 0
-  v2c = 0
-  v3c = 0
+  v1c = sc + (∂ε1c∂ρ + fc * (∂ε0c∂ρ - ∂ε1c∂ρ) + ∂fc∂ρ * (ε0c - ε1c)) * ρ
+  v2c = (∂ε1c∂normρ + fc * (∂ε0c∂normρ - ∂ε1c∂normρ) + (ε0c - ε1c) * ∂fc∂normρ) * ρ
+  v3c = ∂fc∂τ * (ε0c - ε1c) * ρ
   return sc, v1c, v2c, v3c
 end
 
