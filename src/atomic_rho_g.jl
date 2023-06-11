@@ -37,7 +37,7 @@ function atomic_rho_g(
     rhocg = zeros(ComplexF64, Npoints, Nspin)
 
     # No starting magnetization is give, set them to a default value
-    if (Nspin == 2) && starting_magnetization == nothing
+    if (Nspin == 2) && starting_magnetization === nothing
         starting_magnetization = 0.1 * ones(Nspecies)
     end
 

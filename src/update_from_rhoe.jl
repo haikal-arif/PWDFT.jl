@@ -70,7 +70,7 @@ function _add_V_xc!(Ham, Rhoe, RhoeG)
 
     # XC potential
     # VWN is the default
-    if Ham.rhoe_core == nothing
+    if Ham.rhoe_core === nothing
         epsxc[:], Vxc[:, 1] = calc_epsxc_Vxc_VWN(Ham.xc_calc, Rhoe[:, 1])
         Exc = sum(epsxc .* Rhoe[:, 1]) * dVol
     else

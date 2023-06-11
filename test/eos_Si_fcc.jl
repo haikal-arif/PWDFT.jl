@@ -1,7 +1,7 @@
 using PWDFT
 using Test
 using Dates
-using LsqFit
+# using LsqFit
 using Printf
 
 function init_Ham_Si_fcc_SCAN(lattice_param::Float64)::Hamiltonian

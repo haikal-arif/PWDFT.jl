@@ -29,7 +29,7 @@ function write_xsf(filnam::String, LL::Array{Float64,2}, atpos::Array{Float64,2}
     @printf(f, "PRIMCOORD\n")
     @printf(f, "%8d %8d\n", Natoms, 1)
     #
-    if atsymbs == nothing
+    if atsymbs === nothing
         for ia = 1:Natoms
             @printf(f, "X  %18.10f %18.10f %18.10f\n", atpos[1, ia], atpos[2, ia], atpos[3, ia])
         end

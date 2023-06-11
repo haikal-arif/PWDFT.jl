@@ -210,7 +210,7 @@ function write_pwscf( atoms::Atoms, pspfiles::Array{String,1},
                       prefix="./",
                       use_smearing=false, kT=0.001 )
     # kpoints
-    if kpoints == nothing
+    if kpoints === nothing
         kpoints = KPoints( atoms, meshk, shiftk )
     else
         @assert typeof(kpoints) == KPoints

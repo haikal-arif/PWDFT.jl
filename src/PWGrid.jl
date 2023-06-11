@@ -134,7 +134,7 @@ function PWGrid(
         planbws = nothing
     end
 
-    if kpoints == nothing
+    if kpoints === nothing
         kpoints = KPoints(1, (1, 1, 1), zeros(3, 1), [1.0], RecVecs)
     end
 

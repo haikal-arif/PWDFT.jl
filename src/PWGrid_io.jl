@@ -33,7 +33,7 @@ function show(io::IO, pw::PWGrid; header=true)
     @printf(io, "ecutwfc                = %18.10f Ha\n", pw.ecutwfc)
     @printf(io, "ecutrho                = %18.10f Ha\n", pw.ecutrho)
     @printf(io, "Sampling points        = (%5d,%5d,%5d)\n", pw.Ns[1], pw.Ns[2], pw.Ns[3])
-    if pw.Nss != nothing
+    if pw.Nss !== nothing
         @printf(io, "Sampling points smooth = (%5d,%5d,%5d)\n", pw.Nss[1], pw.Nss[2], pw.Nss[3])
     end
     #
