@@ -1,5 +1,3 @@
-using ForwardDiff
-
 function XC_c_scan(ρ::Float64, norm∇ρ::Float64, τ::Float64)
   # Strongly Constrained and Appropriately Normed Semilocal Density Functional
   # Sun, J., Ruzsinzky, A., Perdew, J.P
