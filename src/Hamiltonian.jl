@@ -243,7 +243,7 @@ function Hamiltonian(
     end
 
     if use_xc_internal
-        xc_calc = XCCalculator()
+        xc_calc = XCCalculator(is_metagga=true, Npoints=Npoints, Nspin=Nspin)
     else
         # Using Libxc is the default
         if xcfunc == "SCAN"
@@ -379,7 +379,8 @@ function update!(Ham::Hamiltonian, psiks::BlochWavefunc, rhoe::Array{Float64,1})
 
     if Ham.xcfunc == "SCAN"
         Vxc_tmp = zeros(size(rhoe, 1)) # FIXME: use V_XC directly
-        calc_Vxc_SCAN!(Ham, psiks, rhoe, Vxc_tmp)
+        use_internal = (typeof(Ham.xc_calc) == XCCalculator)
+        calc_Vxc_SCAN!(Ham, psiks, rhoe, Vxc_tmp, use_internal)
         V_XC[:, 1] = Vxc_tmp[:]
         #
     elseif Ham.xcfunc == "PBE"
@@ -387,7 +388,7 @@ function update!(Ham::Hamiltonian, psiks::BlochWavefunc, rhoe::Array{Float64,1})
         #
     else
         # VWN is the default
-        if Ham.rhoe_core == nothing
+        if Ham.rhoe_core === nothing
             @views V_XC[:, 1] = calc_Vxc_VWN(xc_calc, rhoe)
         else
             @views V_XC[:, 1] = calc_Vxc_VWN(xc_calc, rhoe + Ham.rhoe_core)

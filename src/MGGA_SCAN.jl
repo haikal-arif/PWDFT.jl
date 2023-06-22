@@ -204,8 +204,8 @@ function calc_Vxc_SCAN!(
     Vtau_c = zeros(Float64, Npoints)
 
     if use_internal
-        _, V_x, Vg_x, Vtau_x = XC_x_scan(Rhoe, gRhoe2, KEdens)
-        _, V_c, Vg_c, Vtau_c = XC_c_scan(Rhoe, gRhoe2, KEdens)
+        _, V_x, Vg_x, Vtau_x = XC_x_scan(Rhoe, gRhoe2 .^ 0.5, KEdens)
+        _, V_c, Vg_c, Vtau_c = XC_c_scan(Rhoe, gRhoe2 .^ 0.5, KEdens)
     else
         ptr = Libxc_xc_func_alloc()
         # exchange part

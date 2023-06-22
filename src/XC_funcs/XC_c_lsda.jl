@@ -21,7 +21,7 @@ function XC_c_lsda(n::Float64)
   Q1prime = A * (β1 * rs^-0.5 + 2 * β2 + 3 * β3 * rs^0.5 + 4 * β4 * rs)
 
   ec = Q0 * log(1 + 1 / Q1)
-  vc = (-2 * A * alpha * log(1 + 1 / Q1) - (Q0 * Q1prime) / (Q1 * Q1 + Q1)) * DrsDn
+  vc = -1*(-2 * A * alpha * log(1 + 1 / Q1) - (Q0 * Q1prime) / (Q1 * Q1 + Q1)) * DrsDn
 
 
   return ec, vc

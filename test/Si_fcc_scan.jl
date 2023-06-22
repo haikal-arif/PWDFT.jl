@@ -13,7 +13,7 @@ function init_Ham_Si_fcc_SCAN()
 
     pspfiles = [joinpath(@__DIR__, "../pseudopotentials", "scan_upf", "Si.SCAN.UPF2")]
     ecutwfc = 25.0
-    return Hamiltonian(atoms, pspfiles, ecutwfc, meshk=[10, 10, 10], xcfunc="SCAN")
+    return Hamiltonian(atoms, pspfiles, ecutwfc, meshk=[10, 10, 10], xcfunc="SCAN", use_xc_internal=true)
 end
 
 const Etot_Si_fcc_SCAN = -7.875081515 # PWSCF
@@ -22,7 +22,7 @@ const Etot_Si_fcc_SCAN = -7.875081515 # PWSCF
 @testset "Si fcc SCAN SCF Rhoe mix simple" begin
     Random.seed!(1234)
     Ham = init_Ham_Si_fcc_SCAN()
-    KS_solve_SCF!(Ham, betamix=0.5, verbose=true)
+    KS_solve_SCF!(Ham, betamix=0.1, verbose=true)
     println("")
     Etot = sum(Ham.energies)
     @test Etot ≈ Etot_Si_fcc_SCAN atol = 5e-3

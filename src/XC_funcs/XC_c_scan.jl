@@ -38,8 +38,6 @@ function XC_c_scan(ρ::Float64, norm∇ρ::Float64, τ::Float64)
   ∂t∂norm∇ρ = (3 * π * π / 16)^(1 / 3) * ∂s∂norm∇ρ / (ϕ * sqrt(r))
   ∂t∂τ = 0
 
-  heaviside(t) = 0.5 * (sign(t) + 1)
-
   β = 0.066725 * (1 + 0.1 * r) / (1 + 0.1778 * r)
   ∂β∂ρ = 0.066725 * ((1 + 0.1778 * r) * 0.1 * ∂r∂ρ - (1 + 0.1 * r) * 0.1778 * ∂r∂ρ) / (1 + 0.1778 * r)^2
   ∂β∂normρ = 0
@@ -98,13 +96,27 @@ function XC_c_scan(ρ::Float64, norm∇ρ::Float64, τ::Float64)
   ∂ε1c∂ρ = vLSDAc + ∂H1∂ρ
   ∂ε1c∂normρ = ∂H1∂normρ
 
-  fc = exp(-c1c * α / (1 - α)) * heaviside(1 - α) - dc * exp(c2c / (1 - α)) * heaviside(α - 1)
-  ∂fc∂ρ = (-c1c * ∂α∂ρ / (1 - α)^2) * exp(-c1c * α / (1 - α)) * heaviside(1 - α) -
-          (c2c * ∂α∂ρ / (1 - α)^2) * dc * exp(c2c / (1 - α)) * heaviside(α - 1)
-  ∂fc∂normρ = (-c1c * ∂α∂norm∇ρ / (1 - α)^2) * exp(-c1c * α / (1 - α)) * heaviside(1 - α) -
-              (c2c * ∂α∂norm∇ρ / (1 - α)^2) * dc * exp(c2c / (1 - α)) * heaviside(α - 1)
-  ∂fc∂τ = (-c1c * ∂α∂τ / (1 - α)^2) * exp(-c1c * α / (1 - α)) * heaviside(1 - α) -
-          (c2c * ∂α∂τ / (1 - α)^2) * dc * exp(c2c / (1 - α)) * heaviside(α - 1)
+  fc = if (1 - α) > 0
+    exp(-c1c * α / (1 - α))
+  else
+    -dc * exp(c2c / (1 - α))
+  end
+
+  ∂fc∂ρ = if (1 - α) > 0
+    (-c1c * ∂α∂ρ / (1 - α)^2) * exp(-c1c * α / (1 - α))
+  else
+    -(c2c * ∂α∂ρ / (1 - α)^2) * dc * exp(c2c / (1 - α))
+  end
+  ∂fc∂normρ = if (1 - α) > 0
+    (-c1c * ∂α∂norm∇ρ / (1 - α)^2) * exp(-c1c * α / (1 - α))
+  else
+    -(c2c * ∂α∂norm∇ρ / (1 - α)^2) * dc * exp(c2c / (1 - α))
+  end
+  ∂fc∂τ = if (1 - α) > 0
+    (-c1c * ∂α∂τ / (1 - α)^2) * exp(-c1c * α / (1 - α))
+  else
+    -(c2c * ∂α∂τ / (1 - α)^2) * dc * exp(c2c / (1 - α))
+  end
 
 
   sc = (ε1c + fc * (ε0c - ε1c))
