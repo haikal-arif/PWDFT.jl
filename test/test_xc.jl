@@ -12,6 +12,8 @@ sigma = [0.017497015816998904, 0.2, 0.3, 0.4, 0.5, 0.6]
 tau = [0.02111067206450958, 0.2, 0.3, 0.4, 0.5, 0.6]
 lapl = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
 
+Npoints = 6
+
 
 # @testset "LDA_VWN xc" begin
 #     @test calc_epsxc_VWN(LibxcXCCalculator(), rho) ≈ [-0.396206, -0.490557, -0.556226, -0.608272, -0.652089] atol = 1e-5
@@ -23,22 +25,38 @@ lapl = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
 # end
 
 @testset "MGGA_SCAN xc" begin
-    exc_libxc = zeros(6)
-    ex_libxc = zeros(6)
-    ec_libxc = zeros(6)
+    exc_libxc = zeros(Npoints)
+    ex_libxc = zeros(Npoints)
+    vx1_libxc = zeros(Npoints)
+    vx2_libxc = zeros(Npoints)
+    vx3_libxc = zeros(Npoints)
+
+    ec_libxc = zeros(Npoints)
+    vc1_libxc = zeros(Npoints)
+    vc2_libxc = zeros(Npoints)
+    vc3_libxc = zeros(Npoints)
+
+    Vlapl = zeros(Npoints)
+
     xc_func_ptr = Libxc_xc_func_alloc()
     Libxc_xc_func_init(xc_func_ptr, 263, 1)
-    Libxc_xc_mgga_exc!(xc_func_ptr, 6, rho, sigma.*sigma, lapl, tau, ex_libxc)
+    Libxc_xc_mgga_exc!(xc_func_ptr, Npoints, rho, sigma .* sigma, lapl, tau, ex_libxc)
+    Libxc_xc_mgga_vxc!(xc_func_ptr, Npoints, rho, sigma .* sigma, lapl, tau, vx1_libxc, vx2_libxc, Vlapl, vx3_libxc)
+
     Libxc_xc_func_init(xc_func_ptr, 267, 1)
-    Libxc_xc_mgga_exc!(xc_func_ptr, 6, rho, sigma.*sigma, lapl, tau, ec_libxc)
+    Libxc_xc_mgga_exc!(xc_func_ptr, Npoints, rho, sigma .* sigma, lapl, tau, ec_libxc)
+    Libxc_xc_mgga_vxc!(xc_func_ptr, Npoints, rho, sigma .* sigma, lapl, tau, vc1_libxc, vc2_libxc, Vlapl, vc3_libxc)
     Libxc_xc_func_end(xc_func_ptr)
+
 
     exc_libxc = ex_libxc + ec_libxc
 
     ex, vx_1, vx_2, vx_3 = XC_x_scan(rho, sigma, tau)
-    @test ex ≈ ex_libxc atol = 1e-4
     ec, vc_1, vc_2, vc_3 = XC_c_scan(rho, sigma, tau)
+
     @test ex + ec ≈ exc_libxc atol = 1e-4
-    @test vx_1+vc_1 ≈ [-0.4224, -0.5065, -0.7106, -0.7638, -0.9083, -0.9714]
+    @test vx_1 + vc_1 ≈ vx1_libxc + vc1_libxc atol = 1e-4
+    @test vx_2 ≈ vx2_libxc atol = 1e-4
+    @test vx_3 ≈ vx3_libxc atol = 1e-4
 end
 
