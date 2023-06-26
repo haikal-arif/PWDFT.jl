@@ -10,8 +10,15 @@ function show(io::IO, Ham::Hamiltonian; header=true)
     @printf(io, "size (MiB) = %18.5f\n", Base.summarysize(Ham) / 1024 / 1024)
     println(io, "")
     println(io, "xcfunc       = ", Ham.xcfunc)
-    println(io, "xc_calc.x_id = ", Ham.xc_calc.x_id)
-    println(io, "xc_calc.c_id = ", Ham.xc_calc.c_id)
+    
+    if typeof(Ham.xc_calc) == LibxcXCCalculator
+        println(io, "xc_calc.x_id = ", Ham.xc_calc.x_id)
+        println(io, "xc_calc.c_id = ", Ham.xc_calc.c_id)
+    elseif typeof(Ham.xc_calc) == XCCalculator
+        println("Using internal implementation")
+    end
+
+
     println(io, "")
     show(io, Ham.atoms)
     show(io, Ham.pw)
