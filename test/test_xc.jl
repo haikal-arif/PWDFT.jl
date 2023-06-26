@@ -8,7 +8,7 @@ include("../src/Libxc_old.jl")
 include("../src/XC_funcs/XC_x_slater.jl")
 
 rho = [0.05138739333034855, 0.1, 0.2, 0.3, 0.4, 0.5]
-sigma = [0.017497015816998904, 0.2, 0.3, 0.4, 0.5, 0.6]
+grho = [0.017497015816998904, 0.2, 0.3, 0.4, 0.5, 0.6]
 tau = [0.02111067206450958, 0.2, 0.3, 0.4, 0.5, 0.6]
 lapl = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
 
@@ -21,7 +21,7 @@ Npoints = 6
 # end
 
 # @testset "GGA_PBE xc" begin
-#     @test calc_epsxc_PBE(rho, sigma) ≈ [-0.459808, -0.5073, -0.562455, -0.611123, -0.653534] atol = 1e-5
+#     @test calc_epsxc_PBE(rho, grho) ≈ [-0.459808, -0.5073, -0.562455, -0.611123, -0.653534] atol = 1e-5
 # end
 
 @testset "MGGA_SCAN xc" begin
@@ -40,23 +40,23 @@ Npoints = 6
 
     xc_func_ptr = Libxc_xc_func_alloc()
     Libxc_xc_func_init(xc_func_ptr, 263, 1)
-    Libxc_xc_mgga_exc!(xc_func_ptr, Npoints, rho, sigma .* sigma, lapl, tau, ex_libxc)
-    Libxc_xc_mgga_vxc!(xc_func_ptr, Npoints, rho, sigma .* sigma, lapl, tau, vx1_libxc, vx2_libxc, Vlapl, vx3_libxc)
+    Libxc_xc_mgga_exc!(xc_func_ptr, Npoints, rho, grho .* grho, lapl, tau, ex_libxc)
+    Libxc_xc_mgga_vxc!(xc_func_ptr, Npoints, rho, grho .* grho, lapl, tau, vx1_libxc, vx2_libxc, Vlapl, vx3_libxc)
 
     Libxc_xc_func_init(xc_func_ptr, 267, 1)
-    Libxc_xc_mgga_exc!(xc_func_ptr, Npoints, rho, sigma .* sigma, lapl, tau, ec_libxc)
-    Libxc_xc_mgga_vxc!(xc_func_ptr, Npoints, rho, sigma .* sigma, lapl, tau, vc1_libxc, vc2_libxc, Vlapl, vc3_libxc)
+    Libxc_xc_mgga_exc!(xc_func_ptr, Npoints, rho, grho .* grho, lapl, tau, ec_libxc)
+    Libxc_xc_mgga_vxc!(xc_func_ptr, Npoints, rho, grho .* grho, lapl, tau, vc1_libxc, vc2_libxc, Vlapl, vc3_libxc)
     Libxc_xc_func_end(xc_func_ptr)
 
 
     exc_libxc = ex_libxc + ec_libxc
 
-    ex, vx_1, vx_2, vx_3 = XC_x_scan(rho, sigma, tau)
-    ec, vc_1, vc_2, vc_3 = XC_c_scan(rho, sigma, tau)
+    ex, vx_1, vx_2, vx_3 = XC_x_scan(rho, grho, tau)
+    ec, vc_1, vc_2, vc_3 = XC_c_scan(rho, grho, tau)
 
     @test ex + ec ≈ exc_libxc atol = 1e-4
     @test vx_1 + vc_1 ≈ vx1_libxc + vc1_libxc atol = 1e-4
-    @test vx_2 ≈ vx2_libxc atol = 1e-4
-    @test vx_3 ≈ vx3_libxc atol = 1e-4
+    @test vx_2 + vc_2 ≈ 2 * (vx2_libxc + vc2_libxc) .* grho atol = 1e-4
+    @test vx_3 + vc_3 ≈ vx3_libxc + vc3_libxc atol = 1e-4
 end
 

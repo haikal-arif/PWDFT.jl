@@ -97,8 +97,8 @@ function XC_x_scan(ρ, norm∇ρ, τ) # (ρ, |∇ρ|, τ)
 
   sx = nexunif .* Fx
   v1x = (Fx .* ∂nexunif∂n) + (ρ .* nexunif .* ∂Fx∂n) # ∂e/∂n
-  v2x = nexunif .* ∂Fx∂norm∇ρ ./ norm∇ρ # ∂e/∂n|∇ρ| * 1/|ρ|
-  v3x = nexunif .* ∂Fx∂τ
+  v2x = ρ .* nexunif .* ∂Fx∂norm∇ρ 
+  v3x = ρ .* nexunif .* ∂Fx∂τ
 
   return sx, v1x, v2x, v3x
 end

@@ -13,7 +13,7 @@ function init_Ham_Si_fcc_SCAN()
 
     pspfiles = [joinpath(@__DIR__, "../pseudopotentials", "scan_upf", "Si.SCAN.UPF2")]
     ecutwfc = 25.0
-    return Hamiltonian(atoms, pspfiles, ecutwfc, meshk=[3, 3, 3], xcfunc="SCAN", use_xc_internal=true)
+    return Hamiltonian(atoms, pspfiles, ecutwfc, meshk=[10, 10, 10], xcfunc="SCAN", use_xc_internal=true)
 end
 
 const Etot_Si_fcc_SCAN = -7.875081515 # PWSCF
