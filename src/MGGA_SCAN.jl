@@ -206,8 +206,8 @@ function calc_Vxc_SCAN!(
     if use_internal
         _, V_x, Vg_x, Vtau_x = XC_x_scan(Rhoe, gRhoe2 .^ 0.5, KEdens)
         _, V_c, Vg_c, Vtau_c = XC_c_scan(Rhoe, gRhoe2 .^ 0.5, KEdens)
-        Vg_x = 2 * Vg_x .* (gRhoe2 .^ 0.5) # This is used for accommodating definition difference between libxc and internal implementation
-        Vg_c = 2 * Vg_c .* (gRhoe2 .^ 0.5)
+        Vg_x = 0.5 * Vg_x ./ (gRhoe2 .^ 0.5) # This is used for accommodating definition difference between libxc and internal implementation
+        Vg_c = 0.5 * Vg_c ./ (gRhoe2 .^ 0.5)
     else
         ptr = Libxc_xc_func_alloc()
         # exchange part
