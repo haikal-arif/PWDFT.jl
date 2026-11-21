@@ -6,10 +6,10 @@ function test_O2()
     electrons = Electrons( atoms, pspots )
     println(electrons)
 
-    electrons = Electrons( atoms, pspots, (5,7) )
+    electrons = Electrons( atoms, pspots, Nspin_wf=2 )
     println(electrons)
 
-    electrons = Electrons( atoms, pspots, (7,5), Nstates_extra=1 )
+    electrons = Electrons( atoms, pspots, Nspin_wf=2, Nstates_empty=1 )
     println(electrons)
 
     return nothing
@@ -36,7 +36,7 @@ function test_Ni_q18_fcc()
     electrons = Electrons( atoms, pspots, Nkpt=2, Nstates_empty=1 )
     println(electrons)
 
-    electrons = Electrons( atoms, pspots, Nkpt=2, Nstates_empty=1, Nspin=2 )
+    electrons = Electrons( atoms, pspots, Nkpt=2, Nstates_empty=1, Nspin_wf=2 )
     println(electrons)
 
     electrons = Electrons( atoms, pspots, Nkpt=2, Nstates=13 )

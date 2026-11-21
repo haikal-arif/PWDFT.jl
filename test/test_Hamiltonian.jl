@@ -73,5 +73,12 @@ end
 @testset "create Hamiltonian" begin
     @test test_Hamiltonian_v1() == nothing
     @test test_Hamiltonian_v3() == nothing
-    @test test_Hamiltonian_v4() == nothing
+    # PAW test needs PSLIB_US_PAW_LDA, which is not included in the repo
+    paw_file = joinpath(DIR_PWDFT, "pseudopotentials",
+        "PSLIB_US_PAW_LDA", "Si.pz-n-kjpaw_psl.1.0.0.UPF")
+    if isfile(paw_file)
+        @test test_Hamiltonian_v4() == nothing
+    else
+        @test_skip test_Hamiltonian_v4() == nothing
+    end
 end
